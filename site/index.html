@@ -29,20 +29,24 @@
             border-bottom: 2px solid black;
             padding-bottom: 15px;
             margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         h1 {
             font-size: 28px;
             font-weight: 600;
+            margin: 0;
         }
 
         .workout-name {
-            margin-top: 10px;
             padding: 8px;
             border: 1px solid black;
             border-radius: 4px;
             font-size: 16px;
-            width: 300px;
+            flex: 1;
+            max-width: 400px;
         }
 
         .main-grid {
@@ -64,10 +68,9 @@
 
         /* Superset Catalog Styles */
         .superset-catalog {
-            border: 2px solid black;
-            border-radius: 4px;
-            padding: 15px;
+            padding: 0 0 20px 0;
             margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
         }
 
         .superset-catalog h3 {
@@ -77,23 +80,24 @@
         }
 
         .superset-types {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
         }
 
         .superset-type {
-            display: flex;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            padding: 12px;
+            padding: 8px 14px;
             border: 1px solid black;
-            border-radius: 4px;
+            border-radius: 16px;
             cursor: move;
             background: white;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 500;
             transition: background 0.2s;
+            white-space: nowrap;
         }
 
         .superset-type:hover {
@@ -407,11 +411,15 @@
             width: 24px;
             height: 24px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 0;
+        }
+
+        .icon-btn .material-icons-round {
+            font-size: 16px;
         }
 
         .icon-btn:hover {
@@ -475,15 +483,14 @@
 <body>
     <div class="container">
         <header>
-            <h1>CrossFit Workout Builder</h1>
+            <h1>Workout:</h1>
             <input type="text" class="workout-name" id="workoutName" placeholder="Workout name (e.g., WOD 2024-11-08)">
         </header>
 
         <div class="main-grid">
             <div class="panel workout-builder">
-                <h2>Workout Builder</h2>
                 <div class="drop-zone" id="dropZone">
-                    <div class="drop-zone-empty">Drag workout types here to build your workout</div>
+                    <div class="drop-zone-empty">Drag superset types here to build your workout</div>
                 </div>
                 <div class="actions">
                     <button class="btn" id="exportBtn">Export PDF</button>
@@ -492,13 +499,12 @@
             </div>
 
             <div class="panel">
-                <h2>Exercise Catalog</h2>
-                
                 <div class="superset-catalog">
-                    <h3>Superset Types</h3>
+                    <h3>Supersets</h3>
                     <div class="superset-types" id="supersetTypes"></div>
                 </div>
                 
+                <h2>Exercise Catalog</h2>
                 <div class="catalog" id="catalog"></div>
             </div>
         </div>
@@ -874,8 +880,12 @@
                                onchange="updateExercise(${superset.id}, ${exercise.id}, 'weight', this.value)"
                                placeholder="135">
                         <div class="exercise-inline-actions">
-                            <button class="icon-btn" onclick="duplicateExercise(${superset.id}, ${exercise.id})" title="Duplicate">📋</button>
-                            <button class="icon-btn" onclick="removeExercise(${superset.id}, ${exercise.id})" title="Remove">🗑️</button>
+                            <button class="icon-btn" onclick="duplicateExercise(${superset.id}, ${exercise.id})" title="Duplicate">
+                                <span class="material-icons-round">content_copy</span>
+                            </button>
+                            <button class="icon-btn" onclick="removeExercise(${superset.id}, ${exercise.id})" title="Remove">
+                                <span class="material-icons-round">delete</span>
+                            </button>
                         </div>
                     `;
 
