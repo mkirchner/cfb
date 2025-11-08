@@ -63,8 +63,51 @@
             border-bottom: 1px solid black;
         }
 
+        /* Superset Catalog Styles */
+        .superset-catalog {
+            border: 2px solid black;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .superset-catalog h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .superset-types {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .superset-type {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            border: 1px solid black;
+            border-radius: 4px;
+            cursor: move;
+            background: white;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .superset-type:hover {
+            background: #f5f5f5;
+        }
+
+        .superset-type.dragging {
+            opacity: 0.5;
+        }
+
+        /* Exercise Catalog Styles */
         .catalog {
-            max-height: 70vh;
+            max-height: 50vh;
             overflow-y: auto;
         }
 
@@ -112,6 +155,7 @@
             font-size: 14px;
         }
 
+        /* Workout Builder Styles */
         .workout-builder {
             min-height: 300px;
         }
@@ -122,26 +166,12 @@
             border-radius: 4px;
             padding: 20px;
             margin-bottom: 20px;
-            position: relative;
         }
 
         .drop-zone.drag-over {
             background: #f5f5f5;
             border-color: black;
             border-style: solid;
-        }
-        
-        .drop-zone-insert-indicator {
-            height: 4px;
-            background: black;
-            margin: 5px 0;
-            border-radius: 2px;
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-        
-        .drop-zone-insert-indicator.visible {
-            opacity: 1;
         }
 
         .drop-zone-empty {
@@ -151,6 +181,90 @@
             font-size: 14px;
         }
 
+        /* Superset Container Styles */
+        .superset-container {
+            border: 2px solid black;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: #fafafa;
+            position: relative;
+        }
+
+        .superset-container::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: transparent;
+            transition: background 0.2s;
+        }
+
+        .superset-container.drag-over-top::before {
+            background: black;
+            height: 4px;
+        }
+
+        .superset-container.dragging {
+            opacity: 0.5;
+        }
+
+        .superset-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .superset-drag-handle {
+            cursor: move;
+            margin-right: 8px;
+            color: #666;
+            font-size: 18px;
+        }
+
+        .superset-title {
+            font-weight: 600;
+            font-size: 16px;
+            flex: 1;
+        }
+
+        .superset-config {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 12px;
+            padding: 10px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .superset-exercises {
+            min-height: 60px;
+            border: 2px dashed #ccc;
+            border-radius: 4px;
+            padding: 10px;
+            background: white;
+        }
+
+        .superset-exercises.drag-over {
+            background: #f5f5f5;
+            border-color: black;
+            border-style: solid;
+        }
+
+        .superset-exercises-empty {
+            text-align: center;
+            color: #999;
+            padding: 20px;
+            font-size: 13px;
+        }
+
+        /* Workout Exercise Styles */
         .workout-exercise {
             border: 1px solid black;
             border-radius: 4px;
@@ -160,7 +274,7 @@
             cursor: move;
             position: relative;
         }
-        
+
         .workout-exercise::before {
             content: '';
             position: absolute;
@@ -171,10 +285,14 @@
             background: transparent;
             transition: background 0.2s;
         }
-        
+
         .workout-exercise.drag-over-top::before {
             background: black;
             height: 4px;
+        }
+
+        .workout-exercise.dragging {
+            opacity: 0.5;
         }
 
         .workout-exercise-header {
@@ -205,6 +323,11 @@
             gap: 5px;
         }
 
+        .superset-actions {
+            display: flex;
+            gap: 5px;
+        }
+
         .remove-btn, .duplicate-btn {
             background: black;
             color: white;
@@ -231,7 +354,7 @@
 
         .workout-exercise-config {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-columns: 1fr 1fr;
             gap: 10px;
         }
 
@@ -252,10 +375,6 @@
             border: 1px solid black;
             border-radius: 4px;
             font-size: 14px;
-        }
-
-        .workout-exercise.dragging {
-            opacity: 0.5;
         }
 
         .actions {
@@ -304,7 +423,7 @@
             <div class="panel workout-builder">
                 <h2>Workout Builder</h2>
                 <div class="drop-zone" id="dropZone">
-                    <div class="drop-zone-empty">Drag exercises here to build your workout</div>
+                    <div class="drop-zone-empty">Drag workout types here to build your workout</div>
                 </div>
                 <div class="actions">
                     <button class="btn" id="exportBtn">Export PDF</button>
@@ -314,6 +433,12 @@
 
             <div class="panel">
                 <h2>Exercise Catalog</h2>
+                
+                <div class="superset-catalog">
+                    <h3>Workout Types</h3>
+                    <div class="superset-types" id="supersetTypes"></div>
+                </div>
+                
                 <div class="catalog" id="catalog"></div>
             </div>
         </div>
@@ -360,8 +485,57 @@
             ]
         };
 
-        let workoutExercises = [];
+        const supersetTypes = [
+            { 
+                name: "For Time", 
+                fields: ["rounds", "timeEstimate"],
+                defaults: { rounds: "1", timeEstimate: "" }
+            },
+            { 
+                name: "AMRAP", 
+                fields: ["duration", "timeEstimate"],
+                defaults: { duration: "20", timeEstimate: "20" }
+            },
+            { 
+                name: "EMOM", 
+                fields: ["duration", "interval", "timeEstimate"],
+                defaults: { duration: "20", interval: "1", timeEstimate: "20" }
+            },
+            { 
+                name: "Chipper", 
+                fields: ["timeEstimate"],
+                defaults: { timeEstimate: "" }
+            }
+        ];
+
+        let workoutSupersets = [];
+        let supersetCounter = 0;
         let exerciseCounter = 0;
+
+        // Drag state variables
+        let draggedExerciseId = null;
+        let draggedSupersetId = null;
+        let draggedFromCatalog = false;
+        let catalogExerciseData = null;
+        let draggedSupersetType = null;
+
+        function renderSupersetTypes() {
+            const container = document.getElementById('supersetTypes');
+            container.innerHTML = '';
+
+            supersetTypes.forEach(type => {
+                const div = document.createElement('div');
+                div.className = 'superset-type';
+                div.draggable = true;
+                div.dataset.supersetType = JSON.stringify(type);
+                div.textContent = type.name;
+
+                div.addEventListener('dragstart', handleSupersetTypeDragStart);
+                div.addEventListener('dragend', handleSupersetTypeDragEnd);
+
+                container.appendChild(div);
+            });
+        }
 
         function renderCatalog() {
             const catalog = document.getElementById('catalog');
@@ -387,8 +561,8 @@
                         <span class="exercise-name">${exercise.name}</span>
                     `;
 
-                    item.addEventListener('dragstart', handleDragStart);
-                    item.addEventListener('dragend', handleDragEnd);
+                    item.addEventListener('dragstart', handleCatalogDragStart);
+                    item.addEventListener('dragend', handleCatalogDragEnd);
 
                     categoryDiv.appendChild(item);
                 });
@@ -397,44 +571,58 @@
             }
         }
 
-        function handleDragStart(e) {
+        // Superset Type Drag Handlers
+        function handleSupersetTypeDragStart(e) {
             e.target.classList.add('dragging');
             e.dataTransfer.effectAllowed = 'copy';
-            e.dataTransfer.setData('text/plain', e.target.dataset.exercise);
-            
-            // Set flags for catalog drag
+            draggedSupersetType = JSON.parse(e.target.dataset.supersetType);
+        }
+
+        function handleSupersetTypeDragEnd(e) {
+            e.target.classList.remove('dragging');
+            draggedSupersetType = null;
+        }
+
+        // Catalog Drag Handlers
+        function handleCatalogDragStart(e) {
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'copy';
             draggedFromCatalog = true;
+            draggedExerciseId = null;
+            draggedSupersetId = null;
             catalogExerciseData = JSON.parse(e.target.dataset.exercise);
         }
 
-        function handleDragEnd(e) {
+        function handleCatalogDragEnd(e) {
             e.target.classList.remove('dragging');
             draggedFromCatalog = false;
             catalogExerciseData = null;
         }
 
+        // Drop Zone Handlers
         const dropZone = document.getElementById('dropZone');
 
         dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
             
-            // Check if we're dragging over the empty space (not over an exercise)
-            const exerciseElements = Array.from(dropZone.querySelectorAll('.workout-exercise'));
-            const isOverExercise = exerciseElements.some(el => {
-                const rect = el.getBoundingClientRect();
-                return e.clientY >= rect.top && e.clientY <= rect.bottom;
-            });
-            
-            if (!isOverExercise) {
-                e.dataTransfer.dropEffect = draggedFromCatalog ? 'copy' : 'move';
-                dropZone.classList.add('drag-over');
-            } else {
-                dropZone.classList.remove('drag-over');
+            if (draggedSupersetType) {
+                // Dropping a superset type
+                const supersetElements = Array.from(dropZone.querySelectorAll('.superset-container'));
+                const isOverSuperset = supersetElements.some(el => {
+                    const rect = el.getBoundingClientRect();
+                    return e.clientY >= rect.top && e.clientY <= rect.bottom;
+                });
+                
+                if (!isOverSuperset) {
+                    e.dataTransfer.dropEffect = 'copy';
+                    dropZone.classList.add('drag-over');
+                } else {
+                    dropZone.classList.remove('drag-over');
+                }
             }
         });
 
         dropZone.addEventListener('dragleave', (e) => {
-            // Only remove if we're leaving the drop zone entirely
             if (!dropZone.contains(e.relatedTarget)) {
                 dropZone.classList.remove('drag-over');
             }
@@ -444,58 +632,37 @@
             e.preventDefault();
             dropZone.classList.remove('drag-over');
             
-            // Check if we dropped on empty space or at the end
-            const exerciseElements = Array.from(dropZone.querySelectorAll('.workout-exercise'));
-            const isOverExercise = exerciseElements.some(el => {
-                const rect = el.getBoundingClientRect();
-                return e.clientY >= rect.top && e.clientY <= rect.bottom;
-            });
-            
-            if (!isOverExercise) {
-                // Dropped in empty space or at end
-                if (draggedFromCatalog && catalogExerciseData) {
-                    const exerciseData = catalogExerciseData;
-                    addExerciseToWorkout(exerciseData);
-                } else if (draggedExerciseId !== null) {
-                    // Move to end
-                    const draggedIndex = workoutExercises.findIndex(ex => ex.id === draggedExerciseId);
-                    const [removed] = workoutExercises.splice(draggedIndex, 1);
-                    workoutExercises.push(removed);
-                    renderWorkout();
+            if (draggedSupersetType) {
+                // Check if dropped on empty space
+                const supersetElements = Array.from(dropZone.querySelectorAll('.superset-container'));
+                const isOverSuperset = supersetElements.some(el => {
+                    const rect = el.getBoundingClientRect();
+                    return e.clientY >= rect.top && e.clientY <= rect.bottom;
+                });
+                
+                if (!isOverSuperset) {
+                    addSupersetToWorkout(draggedSupersetType);
                 }
             }
         });
 
-        function addExerciseToWorkout(exercise) {
-            const id = exerciseCounter++;
-            workoutExercises.push({
-                id,
-                ...exercise,
-                sets: '',
-                reps: '',
-                weight: ''
-            });
+        function addSupersetToWorkout(type) {
+            const newSuperset = {
+                id: supersetCounter++,
+                type: type,
+                config: { ...type.defaults },
+                exercises: []
+            };
+            workoutSupersets.push(newSuperset);
             renderWorkout();
-        }
-
-        function removeExercise(id) {
-            workoutExercises = workoutExercises.filter(ex => ex.id !== id);
-            renderWorkout();
-        }
-
-        function updateExercise(id, field, value) {
-            const exercise = workoutExercises.find(ex => ex.id === id);
-            if (exercise) {
-                exercise[field] = value;
-            }
         }
 
         function renderWorkout() {
             const empty = dropZone.querySelector('.drop-zone-empty');
             
-            if (workoutExercises.length === 0) {
+            if (workoutSupersets.length === 0) {
                 if (!empty) {
-                    dropZone.innerHTML = '<div class="drop-zone-empty">Drag exercises here to build your workout</div>';
+                    dropZone.innerHTML = '<div class="drop-zone-empty">Drag workout types here to build your workout</div>';
                 }
                 return;
             }
@@ -504,91 +671,225 @@
                 empty.remove();
             }
 
-            const existingExercises = dropZone.querySelectorAll('.workout-exercise');
-            existingExercises.forEach(el => el.remove());
+            const existingSupersets = dropZone.querySelectorAll('.superset-container');
+            existingSupersets.forEach(el => el.remove());
 
-            workoutExercises.forEach((exercise, index) => {
-                const div = document.createElement('div');
-                div.className = 'workout-exercise';
-                div.draggable = true;
-                div.dataset.exerciseId = exercise.id;
-                div.innerHTML = `
-                    <div class="workout-exercise-header">
-                        <span class="drag-handle">⋮⋮</span>
-                        <span class="exercise-icon">${exercise.icon}</span>
-                        <span class="exercise-name">${exercise.name}</span>
-                        <div class="exercise-actions">
-                            <button class="duplicate-btn" onclick="duplicateExercise(${exercise.id})">Duplicate</button>
-                            <button class="remove-btn" onclick="removeExercise(${exercise.id})">Remove</button>
+            workoutSupersets.forEach((superset) => {
+                const supersetDiv = document.createElement('div');
+                supersetDiv.className = 'superset-container';
+                supersetDiv.draggable = true;
+                supersetDiv.dataset.supersetId = superset.id;
+
+                // Build config fields HTML
+                let configFieldsHTML = '';
+                superset.type.fields.forEach(field => {
+                    const label = field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1');
+                    const placeholder = getFieldPlaceholder(field);
+                    configFieldsHTML += `
+                        <div class="config-field">
+                            <label>${label}</label>
+                            <input type="text" value="${superset.config[field] || ''}" 
+                                   onchange="updateSupersetConfig(${superset.id}, '${field}', this.value)"
+                                   placeholder="${placeholder}">
+                        </div>
+                    `;
+                });
+
+                supersetDiv.innerHTML = `
+                    <div class="superset-header">
+                        <span class="superset-drag-handle">⋮⋮</span>
+                        <span class="superset-title">${superset.type.name}</span>
+                        <div class="superset-actions">
+                            <button class="remove-btn" onclick="removeSuperset(${superset.id})">Remove</button>
                         </div>
                     </div>
-                    <div class="workout-exercise-config">
-                        <div class="config-field">
-                            <label>Sets/Rounds</label>
-                            <input type="text" value="${exercise.sets}" 
-                                   onchange="updateExercise(${exercise.id}, 'sets', this.value)"
-                                   placeholder="e.g., 3 or AMRAP">
-                        </div>
-                        <div class="config-field">
-                            <label>Reps</label>
-                            <input type="text" value="${exercise.reps}" 
-                                   onchange="updateExercise(${exercise.id}, 'reps', this.value)"
-                                   placeholder="e.g., 10">
-                        </div>
-                        <div class="config-field">
-                            <label>Weight/Time</label>
-                            <input type="text" value="${exercise.weight}" 
-                                   onchange="updateExercise(${exercise.id}, 'weight', this.value)"
-                                   placeholder="e.g., 135 lbs">
-                        </div>
+                    <div class="superset-config">
+                        ${configFieldsHTML}
+                    </div>
+                    <div class="superset-exercises" data-superset-id="${superset.id}">
+                        ${superset.exercises.length === 0 ? '<div class="superset-exercises-empty">Drag exercises here</div>' : ''}
                     </div>
                 `;
+
+                supersetDiv.addEventListener('dragstart', handleSupersetDragStart);
+                supersetDiv.addEventListener('dragend', handleSupersetDragEnd);
+                supersetDiv.addEventListener('dragover', handleSupersetDragOver);
+                supersetDiv.addEventListener('drop', handleSupersetDrop);
+                supersetDiv.addEventListener('dragleave', handleSupersetDragLeave);
+
+                dropZone.appendChild(supersetDiv);
+
+                const exercisesContainer = supersetDiv.querySelector('.superset-exercises');
                 
-                // Add drag event listeners for reordering
-                div.addEventListener('dragstart', handleWorkoutDragStart);
-                div.addEventListener('dragend', handleWorkoutDragEnd);
-                div.addEventListener('dragover', handleWorkoutDragOver);
-                div.addEventListener('drop', handleWorkoutDrop);
-                div.addEventListener('dragleave', handleWorkoutDragLeave);
-                
-                dropZone.appendChild(div);
+                superset.exercises.forEach((exercise) => {
+                    const exerciseDiv = document.createElement('div');
+                    exerciseDiv.className = 'workout-exercise';
+                    exerciseDiv.draggable = true;
+                    exerciseDiv.dataset.exerciseId = exercise.id;
+                    exerciseDiv.dataset.supersetId = superset.id;
+
+                    exerciseDiv.innerHTML = `
+                        <div class="workout-exercise-header">
+                            <span class="drag-handle">⋮⋮</span>
+                            <span class="exercise-icon">${exercise.icon}</span>
+                            <span class="exercise-name">${exercise.name}</span>
+                            <div class="exercise-actions">
+                                <button class="duplicate-btn" onclick="duplicateExercise(${superset.id}, ${exercise.id})">Duplicate</button>
+                                <button class="remove-btn" onclick="removeExercise(${superset.id}, ${exercise.id})">Remove</button>
+                            </div>
+                        </div>
+                        <div class="workout-exercise-config">
+                            <div class="config-field">
+                                <label>Reps</label>
+                                <input type="text" value="${exercise.reps}" 
+                                       onchange="updateExercise(${superset.id}, ${exercise.id}, 'reps', this.value)"
+                                       placeholder="e.g., 10">
+                            </div>
+                            <div class="config-field">
+                                <label>Weight</label>
+                                <input type="text" value="${exercise.weight}" 
+                                       onchange="updateExercise(${superset.id}, ${exercise.id}, 'weight', this.value)"
+                                       placeholder="e.g., 135 lbs">
+                            </div>
+                        </div>
+                    `;
+
+                    exerciseDiv.addEventListener('dragstart', handleExerciseDragStart);
+                    exerciseDiv.addEventListener('dragend', handleExerciseDragEnd);
+                    exerciseDiv.addEventListener('dragover', handleExerciseDragOver);
+                    exerciseDiv.addEventListener('drop', handleExerciseDrop);
+                    exerciseDiv.addEventListener('dragleave', handleExerciseDragLeave);
+
+                    if (exercisesContainer.querySelector('.superset-exercises-empty')) {
+                        exercisesContainer.innerHTML = '';
+                    }
+                    exercisesContainer.appendChild(exerciseDiv);
+                });
+
+                exercisesContainer.addEventListener('dragover', handleExercisesContainerDragOver);
+                exercisesContainer.addEventListener('drop', handleExercisesContainerDrop);
+                exercisesContainer.addEventListener('dragleave', handleExercisesContainerDragLeave);
             });
         }
 
-        let draggedExerciseId = null;
-        let draggedFromCatalog = false;
-        let catalogExerciseData = null;
+        function getFieldPlaceholder(field) {
+            const placeholders = {
+                'rounds': 'e.g., 3',
+                'duration': 'minutes',
+                'interval': 'minutes',
+                'timeEstimate': 'minutes'
+            };
+            return placeholders[field] || '';
+        }
 
-        function handleWorkoutDragStart(e) {
-            draggedExerciseId = parseInt(e.currentTarget.dataset.exerciseId);
+        // Superset Drag Handlers
+        function handleSupersetDragStart(e) {
+            if (!e.target.classList.contains('superset-container')) return;
+            draggedSupersetId = parseInt(e.currentTarget.dataset.supersetId);
+            draggedExerciseId = null;
             draggedFromCatalog = false;
             e.currentTarget.classList.add('dragging');
             e.dataTransfer.effectAllowed = 'move';
+            e.stopPropagation();
         }
 
-        function handleWorkoutDragEnd(e) {
+        function handleSupersetDragEnd(e) {
+            e.currentTarget.classList.remove('dragging');
+            document.querySelectorAll('.superset-container').forEach(el => {
+                el.classList.remove('drag-over-top');
+            });
+            draggedSupersetId = null;
+        }
+
+        function handleSupersetDragOver(e) {
+            if (draggedSupersetId === null) return;
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const rect = e.currentTarget.getBoundingClientRect();
+            const midpoint = rect.top + rect.height / 2;
+            
+            document.querySelectorAll('.superset-container').forEach(el => {
+                el.classList.remove('drag-over-top');
+            });
+            
+            if (e.clientY < midpoint) {
+                e.currentTarget.classList.add('drag-over-top');
+            }
+            
+            e.dataTransfer.dropEffect = 'move';
+        }
+
+        function handleSupersetDragLeave(e) {
+            if (!e.currentTarget.contains(e.relatedTarget)) {
+                e.currentTarget.classList.remove('drag-over-top');
+            }
+        }
+
+        function handleSupersetDrop(e) {
+            if (draggedSupersetId === null) return;
+            
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const dropTarget = e.currentTarget;
+            const targetId = parseInt(dropTarget.dataset.supersetId);
+            
+            if (draggedSupersetId === targetId) {
+                dropTarget.classList.remove('drag-over-top');
+                return;
+            }
+            
+            const rect = dropTarget.getBoundingClientRect();
+            const midpoint = rect.top + rect.height / 2;
+            const dropBefore = e.clientY < midpoint;
+            
+            dropTarget.classList.remove('drag-over-top');
+            
+            const draggedIndex = workoutSupersets.findIndex(s => s.id === draggedSupersetId);
+            const [removed] = workoutSupersets.splice(draggedIndex, 1);
+            
+            const newTargetIndex = workoutSupersets.findIndex(s => s.id === targetId);
+            const insertIndex = dropBefore ? newTargetIndex : newTargetIndex + 1;
+            
+            workoutSupersets.splice(insertIndex, 0, removed);
+            renderWorkout();
+        }
+
+        // Exercise Drag Handlers
+        function handleExerciseDragStart(e) {
+            if (!e.target.classList.contains('workout-exercise')) return;
+            draggedExerciseId = parseInt(e.currentTarget.dataset.exerciseId);
+            draggedSupersetId = null;
+            draggedFromCatalog = false;
+            e.currentTarget.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.stopPropagation();
+        }
+
+        function handleExerciseDragEnd(e) {
             e.currentTarget.classList.remove('dragging');
             document.querySelectorAll('.workout-exercise').forEach(el => {
                 el.classList.remove('drag-over-top');
             });
+            document.querySelectorAll('.superset-exercises').forEach(el => {
+                el.classList.remove('drag-over');
+            });
             draggedExerciseId = null;
-            draggedFromCatalog = false;
-            catalogExerciseData = null;
         }
 
-        function handleWorkoutDragOver(e) {
+        function handleExerciseDragOver(e) {
+            if (draggedExerciseId === null && !draggedFromCatalog) return;
             e.preventDefault();
+            e.stopPropagation();
             
-            // Determine if we should drop above or below based on mouse position
             const rect = e.currentTarget.getBoundingClientRect();
             const midpoint = rect.top + rect.height / 2;
             
-            // Clear all drag-over states
             document.querySelectorAll('.workout-exercise').forEach(el => {
                 el.classList.remove('drag-over-top');
             });
             
-            // Add drag-over state to indicate drop position
             if (e.clientY < midpoint) {
                 e.currentTarget.classList.add('drag-over-top');
             }
@@ -596,79 +897,191 @@
             e.dataTransfer.dropEffect = draggedFromCatalog ? 'copy' : 'move';
         }
 
-        function handleWorkoutDragLeave(e) {
-            // Only remove if we're actually leaving the element
+        function handleExerciseDragLeave(e) {
             if (!e.currentTarget.contains(e.relatedTarget)) {
                 e.currentTarget.classList.remove('drag-over-top');
             }
         }
 
-        function handleWorkoutDrop(e) {
+        function handleExerciseDrop(e) {
             e.preventDefault();
             e.stopPropagation();
             
             const dropTarget = e.currentTarget;
-            const targetId = parseInt(dropTarget.dataset.exerciseId);
-            const targetIndex = workoutExercises.findIndex(ex => ex.id === targetId);
+            const targetExerciseId = parseInt(dropTarget.dataset.exerciseId);
+            const targetSupersetId = parseInt(dropTarget.dataset.supersetId);
+            const targetSuperset = workoutSupersets.find(s => s.id === targetSupersetId);
             
-            // Determine drop position based on mouse Y
+            if (!targetSuperset) return;
+            
             const rect = dropTarget.getBoundingClientRect();
             const midpoint = rect.top + rect.height / 2;
             const dropBefore = e.clientY < midpoint;
             
             dropTarget.classList.remove('drag-over-top');
             
+            const targetIndex = targetSuperset.exercises.findIndex(ex => ex.id === targetExerciseId);
+            
             if (draggedFromCatalog && catalogExerciseData) {
-                // Adding from catalog
                 const newExercise = {
                     id: exerciseCounter++,
                     ...catalogExerciseData,
-                    sets: '',
                     reps: '',
                     weight: ''
                 };
                 
                 const insertIndex = dropBefore ? targetIndex : targetIndex + 1;
-                workoutExercises.splice(insertIndex, 0, newExercise);
+                targetSuperset.exercises.splice(insertIndex, 0, newExercise);
                 
-            } else if (draggedExerciseId !== null && draggedExerciseId !== targetId) {
-                // Reordering within workout
-                const draggedIndex = workoutExercises.findIndex(ex => ex.id === draggedExerciseId);
-                const [removed] = workoutExercises.splice(draggedIndex, 1);
+            } else if (draggedExerciseId !== null) {
+                let sourceSuperset = null;
+                let sourceExercise = null;
+                let sourceIndex = -1;
                 
-                // Recalculate target index after removal
-                const newTargetIndex = workoutExercises.findIndex(ex => ex.id === targetId);
+                for (const superset of workoutSupersets) {
+                    const index = superset.exercises.findIndex(ex => ex.id === draggedExerciseId);
+                    if (index !== -1) {
+                        sourceSuperset = superset;
+                        sourceExercise = superset.exercises[index];
+                        sourceIndex = index;
+                        break;
+                    }
+                }
+                
+                if (!sourceSuperset || !sourceExercise) return;
+                
+                sourceSuperset.exercises.splice(sourceIndex, 1);
+                
+                let newTargetIndex = targetIndex;
+                if (sourceSuperset.id === targetSupersetId && sourceIndex < targetIndex) {
+                    newTargetIndex--;
+                }
+                
                 const insertIndex = dropBefore ? newTargetIndex : newTargetIndex + 1;
-                
-                workoutExercises.splice(insertIndex, 0, removed);
+                targetSuperset.exercises.splice(insertIndex, 0, sourceExercise);
             }
             
             renderWorkout();
         }
 
-        function duplicateExercise(id) {
-            const exercise = workoutExercises.find(ex => ex.id === id);
-            if (exercise) {
+        // Exercise Container Drag Handlers
+        function handleExercisesContainerDragOver(e) {
+            if (!draggedFromCatalog || !catalogExerciseData) return;
+            
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const container = e.currentTarget;
+            const exercises = Array.from(container.querySelectorAll('.workout-exercise'));
+            
+            const isOverExercise = exercises.some(el => {
+                const rect = el.getBoundingClientRect();
+                return e.clientY >= rect.top && e.clientY <= rect.bottom;
+            });
+            
+            if (!isOverExercise) {
+                container.classList.add('drag-over');
+            } else {
+                container.classList.remove('drag-over');
+            }
+        }
+
+        function handleExercisesContainerDragLeave(e) {
+            if (!e.currentTarget.contains(e.relatedTarget)) {
+                e.currentTarget.classList.remove('drag-over');
+            }
+        }
+
+        function handleExercisesContainerDrop(e) {
+            if (!draggedFromCatalog || !catalogExerciseData) return;
+            
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const container = e.currentTarget;
+            container.classList.remove('drag-over');
+            
+            const supersetId = parseInt(container.dataset.supersetId);
+            const superset = workoutSupersets.find(s => s.id === supersetId);
+            
+            if (!superset) return;
+            
+            const exercises = Array.from(container.querySelectorAll('.workout-exercise'));
+            const isOverExercise = exercises.some(el => {
+                const rect = el.getBoundingClientRect();
+                return e.clientY >= rect.top && e.clientY <= rect.bottom;
+            });
+            
+            if (!isOverExercise) {
                 const newExercise = {
-                    ...exercise,
-                    id: exerciseCounter++
+                    id: exerciseCounter++,
+                    ...catalogExerciseData,
+                    reps: '',
+                    weight: ''
                 };
-                const index = workoutExercises.findIndex(ex => ex.id === id);
-                workoutExercises.splice(index + 1, 0, newExercise);
+                superset.exercises.push(newExercise);
                 renderWorkout();
             }
         }
 
+        // Update/Remove Functions
+        function updateSupersetConfig(supersetId, field, value) {
+            const superset = workoutSupersets.find(s => s.id === supersetId);
+            if (superset) {
+                superset.config[field] = value;
+            }
+        }
+
+        function removeSuperset(supersetId) {
+            workoutSupersets = workoutSupersets.filter(s => s.id !== supersetId);
+            renderWorkout();
+        }
+
+        function updateExercise(supersetId, exerciseId, field, value) {
+            const superset = workoutSupersets.find(s => s.id === supersetId);
+            if (superset) {
+                const exercise = superset.exercises.find(ex => ex.id === exerciseId);
+                if (exercise) {
+                    exercise[field] = value;
+                }
+            }
+        }
+
+        function removeExercise(supersetId, exerciseId) {
+            const superset = workoutSupersets.find(s => s.id === supersetId);
+            if (superset) {
+                superset.exercises = superset.exercises.filter(ex => ex.id !== exerciseId);
+                renderWorkout();
+            }
+        }
+
+        function duplicateExercise(supersetId, exerciseId) {
+            const superset = workoutSupersets.find(s => s.id === supersetId);
+            if (superset) {
+                const exercise = superset.exercises.find(ex => ex.id === exerciseId);
+                if (exercise) {
+                    const newExercise = {
+                        ...exercise,
+                        id: exerciseCounter++
+                    };
+                    const index = superset.exercises.findIndex(ex => ex.id === exerciseId);
+                    superset.exercises.splice(index + 1, 0, newExercise);
+                    renderWorkout();
+                }
+            }
+        }
+
+        // Button Handlers
         document.getElementById('clearBtn').addEventListener('click', () => {
-            if (workoutExercises.length === 0 || confirm('Clear all exercises from workout?')) {
-                workoutExercises = [];
+            if (workoutSupersets.length === 0 || confirm('Clear all supersets from workout?')) {
+                workoutSupersets = [];
                 renderWorkout();
             }
         });
 
         document.getElementById('exportBtn').addEventListener('click', () => {
-            if (workoutExercises.length === 0) {
-                alert('Add exercises to your workout before exporting');
+            if (workoutSupersets.length === 0) {
+                alert('Add workout types and exercises before exporting');
                 return;
             }
 
@@ -688,36 +1101,65 @@
             doc.line(20, 32, 190, 32);
             
             let y = 45;
-            doc.setFontSize(12);
             
-            workoutExercises.forEach((exercise, index) => {
-                if (y > 270) {
+            workoutSupersets.forEach((superset, supersetIndex) => {
+                if (y > 250) {
                     doc.addPage();
                     y = 20;
                 }
                 
+                doc.setFontSize(14);
                 doc.setFont(undefined, 'bold');
-                doc.text(`${index + 1}. ${exercise.name}`, 20, y);
-                
-                doc.setFont(undefined, 'normal');
+                doc.text(`${supersetIndex + 1}. ${superset.type.name}`, 20, y);
                 y += 7;
                 
-                const details = [];
-                if (exercise.sets) details.push(`Sets: ${exercise.sets}`);
-                if (exercise.reps) details.push(`Reps: ${exercise.reps}`);
-                if (exercise.weight) details.push(`Weight: ${exercise.weight}`);
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'normal');
                 
-                if (details.length > 0) {
-                    doc.text(details.join(' | '), 25, y);
-                    y += 7;
+                const configDetails = [];
+                for (const [key, value] of Object.entries(superset.config)) {
+                    if (value) {
+                        const label = key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1');
+                        configDetails.push(`${label}: ${value}`);
+                    }
                 }
                 
-                y += 5;
+                if (configDetails.length > 0) {
+                    doc.text(configDetails.join(' | '), 25, y);
+                    y += 5;
+                }
+                
+                y += 3;
+                
+                superset.exercises.forEach((exercise, exerciseIndex) => {
+                    if (y > 270) {
+                        doc.addPage();
+                        y = 20;
+                    }
+                    
+                    doc.text(`  ${exercise.name}`, 25, y);
+                    y += 5;
+                    
+                    const details = [];
+                    if (exercise.reps) details.push(`Reps: ${exercise.reps}`);
+                    if (exercise.weight) details.push(`Weight: ${exercise.weight}`);
+                    
+                    if (details.length > 0) {
+                        doc.setFontSize(9);
+                        doc.text(details.join(' | '), 30, y);
+                        doc.setFontSize(10);
+                        y += 5;
+                    }
+                });
+                
+                y += 8;
             });
             
             doc.save(`${workoutName.replace(/\s+/g, '-').toLowerCase()}.pdf`);
         });
 
+        // Initialize
+        renderSupersetTypes();
         renderCatalog();
     </script>
 </body>
