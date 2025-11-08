@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CrossFit Workout Builder</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         * {
@@ -46,13 +47,11 @@
 
         .main-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 2fr 1fr;
             gap: 30px;
         }
 
         .panel {
-            border: 2px solid black;
-            border-radius: 4px;
             padding: 20px;
         }
 
@@ -115,44 +114,55 @@
             margin-bottom: 20px;
         }
 
+        .category-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .category-icon {
+            font-size: 20px;
+        }
+
         .category-title {
             font-weight: 600;
             font-size: 14px;
-            margin-bottom: 8px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
-        .exercise-item {
+        .exercise-pills {
             display: flex;
-            align-items: center;
-            padding: 10px;
-            border: 1px solid black;
-            border-radius: 4px;
-            margin-bottom: 5px;
-            cursor: move;
-            background: white;
-            transition: background 0.2s;
+            flex-wrap: wrap;
+            gap: 6px;
         }
 
-        .exercise-item:hover {
+        .exercise-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            border: 1px solid black;
+            border-radius: 16px;
+            cursor: move;
+            background: white;
+            font-size: 13px;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        .exercise-pill:hover {
             background: #f5f5f5;
         }
 
-        .exercise-item.dragging {
+        .exercise-pill.dragging {
             opacity: 0.5;
         }
 
-        .exercise-icon {
-            font-size: 20px;
-            margin-right: 10px;
-            width: 24px;
-            text-align: center;
-        }
-
-        .exercise-name {
-            flex: 1;
-            font-size: 14px;
+        .exercise-pill.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            border-color: #ccc;
         }
 
         /* Workout Builder Styles */
@@ -358,8 +368,9 @@
         }
 
         .workout-exercise .exercise-icon {
-            font-size: 16px;
+            font-size: 18px;
             flex-shrink: 0;
+            width: 20px;
         }
 
         .workout-exercise .exercise-name {
@@ -484,7 +495,7 @@
                 <h2>Exercise Catalog</h2>
                 
                 <div class="superset-catalog">
-                    <h3>Workout Types</h3>
+                    <h3>Superset Types</h3>
                     <div class="superset-types" id="supersetTypes"></div>
                 </div>
                 
@@ -495,43 +506,58 @@
 
     <script>
         const exercises = {
-            "Cardio": [
-                { name: "Rowing", icon: "🚣" },
-                { name: "Running", icon: "🏃" },
-                { name: "Assault Bike", icon: "🚴" },
-                { name: "Jump Rope", icon: "🪢" },
-                { name: "Burpees", icon: "💥" },
-            ],
-            "Weightlifting": [
-                { name: "Deadlift", icon: "⚡" },
-                { name: "Back Squat", icon: "🦵" },
-                { name: "Front Squat", icon: "🏋️" },
-                { name: "Clean", icon: "💪" },
-                { name: "Snatch", icon: "🎯" },
-                { name: "Clean & Jerk", icon: "🔥" },
-                { name: "Overhead Press", icon: "⬆️" },
-                { name: "Push Press", icon: "📈" },
-            ],
-            "Gymnastics": [
-                { name: "Pull-ups", icon: "↑" },
-                { name: "Muscle-ups", icon: "⭕" },
-                { name: "Handstand Push-ups", icon: "🤸" },
-                { name: "Toes to Bar", icon: "🎪" },
-                { name: "Box Jumps", icon: "📦" },
-                { name: "Pistol Squats", icon: "🦿" },
-            ],
-            "Core": [
-                { name: "Sit-ups", icon: "🔄" },
-                { name: "Plank", icon: "━" },
-                { name: "Russian Twists", icon: "🌀" },
-                { name: "V-ups", icon: "✓" },
-            ],
-            "Other": [
-                { name: "Wall Balls", icon: "🏀" },
-                { name: "Kettlebell Swings", icon: "⚫" },
-                { name: "Thrusters", icon: "🚀" },
-                { name: "Rest", icon: "⏸️" },
-            ]
+            "Cardio": {
+                icon: "directions_run",
+                exercises: [
+                    "Assault Bike",
+                    "Burpees",
+                    "Jump Rope",
+                    "Rowing",
+                    "Running"
+                ]
+            },
+            "Weightlifting": {
+                icon: "fitness_center",
+                exercises: [
+                    "Back Squat",
+                    "Clean",
+                    "Clean & Jerk",
+                    "Deadlift",
+                    "Front Squat",
+                    "Overhead Press",
+                    "Push Press",
+                    "Snatch"
+                ]
+            },
+            "Gymnastics": {
+                icon: "sports_gymnastics",
+                exercises: [
+                    "Box Jumps",
+                    "Handstand Push-ups",
+                    "Muscle-ups",
+                    "Pistol Squats",
+                    "Pull-ups",
+                    "Toes to Bar"
+                ]
+            },
+            "Core": {
+                icon: "self_improvement",
+                exercises: [
+                    "Plank",
+                    "Russian Twists",
+                    "Sit-ups",
+                    "V-ups"
+                ]
+            },
+            "Other": {
+                icon: "sports",
+                exercises: [
+                    "Kettlebell Swings",
+                    "Rest",
+                    "Thrusters",
+                    "Wall Balls"
+                ]
+            }
         };
 
         const supersetTypes = [
@@ -594,32 +620,40 @@
             const catalog = document.getElementById('catalog');
             catalog.innerHTML = '';
 
-            for (const [category, items] of Object.entries(exercises)) {
+            const hasSupersetsInBuilder = workoutSupersets.length > 0;
+
+            for (const [category, data] of Object.entries(exercises)) {
                 const categoryDiv = document.createElement('div');
                 categoryDiv.className = 'exercise-category';
 
-                const title = document.createElement('div');
-                title.className = 'category-title';
-                title.textContent = category;
-                categoryDiv.appendChild(title);
+                const header = document.createElement('div');
+                header.className = 'category-header';
+                header.innerHTML = `
+                    <span class="material-icons-round category-icon">${data.icon}</span>
+                    <span class="category-title">${category}</span>
+                `;
+                categoryDiv.appendChild(header);
 
-                items.forEach(exercise => {
-                    const item = document.createElement('div');
-                    item.className = 'exercise-item';
-                    item.draggable = true;
-                    item.dataset.exercise = JSON.stringify(exercise);
+                const pillsContainer = document.createElement('div');
+                pillsContainer.className = 'exercise-pills';
 
-                    item.innerHTML = `
-                        <span class="exercise-icon">${exercise.icon}</span>
-                        <span class="exercise-name">${exercise.name}</span>
-                    `;
+                data.exercises.forEach(exerciseName => {
+                    const pill = document.createElement('div');
+                    pill.className = 'exercise-pill';
+                    if (!hasSupersetsInBuilder) {
+                        pill.classList.add('disabled');
+                    } else {
+                        pill.draggable = true;
+                        pill.dataset.exercise = JSON.stringify({ name: exerciseName, category: category, icon: data.icon });
+                        pill.addEventListener('dragstart', handleCatalogDragStart);
+                        pill.addEventListener('dragend', handleCatalogDragEnd);
+                    }
+                    pill.textContent = exerciseName;
 
-                    item.addEventListener('dragstart', handleCatalogDragStart);
-                    item.addEventListener('dragend', handleCatalogDragEnd);
-
-                    categoryDiv.appendChild(item);
+                    pillsContainer.appendChild(pill);
                 });
 
+                categoryDiv.appendChild(pillsContainer);
                 catalog.appendChild(categoryDiv);
             }
         }
@@ -716,8 +750,9 @@
             
             if (workoutSupersets.length === 0) {
                 if (!empty) {
-                    dropZone.innerHTML = '<div class="drop-zone-empty">Drag workout types here to build your workout</div>';
+                    dropZone.innerHTML = '<div class="drop-zone-empty">Drag superset types here to build your workout</div>';
                 }
+                renderCatalog(); // Re-render to disable exercises
                 return;
             }
 
@@ -832,7 +867,7 @@
                                value="${exercise.reps || ''}"
                                onchange="updateExercise(${superset.id}, ${exercise.id}, 'reps', this.value)"
                                placeholder="10">
-                        <span class="exercise-icon">${exercise.icon}</span>
+                        <span class="material-icons-round exercise-icon">${exercise.icon}</span>
                         <span class="exercise-name">${exercise.name}</span>
                         <input type="text" class="workout-exercise-inline-input" 
                                value="${exercise.weight || ''}"
@@ -860,6 +895,9 @@
                 exercisesContainer.addEventListener('drop', handleExercisesContainerDrop);
                 exercisesContainer.addEventListener('dragleave', handleExercisesContainerDragLeave);
             });
+
+            // Re-render catalog to enable exercises now that supersets exist
+            renderCatalog();
         }
 
         function getFieldPlaceholder(field) {
