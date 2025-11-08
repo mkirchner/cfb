@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CrossFit Workout Builder</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: white;
+            color: black;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            border-bottom: 2px solid black;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .workout-name {
+            margin-top: 10px;
+            padding: 8px;
+            border: 1px solid black;
+            border-radius: 4px;
+            font-size: 16px;
+            width: 300px;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .panel {
+            border: 2px solid black;
+            border-radius: 4px;
+            padding: 20px;
+        }
+
+        .panel h2 {
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid black;
+        }
+
+        .catalog {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .exercise-category {
+            margin-bottom: 20px;
+        }
+
+        .category-title {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .exercise-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid black;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            cursor: move;
+            background: white;
+            transition: background 0.2s;
+        }
+
+        .exercise-item:hover {
+            background: #f5f5f5;
+        }
+
+        .exercise-item.dragging {
+            opacity: 0.5;
+        }
+
+        .exercise-icon {
+            font-size: 20px;
+            margin-right: 10px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .exercise-name {
+            flex: 1;
+            font-size: 14px;
+        }
+
+        .workout-builder {
+            min-height: 300px;
+        }
+
+        .drop-zone {
+            min-height: 200px;
+            border: 2px dashed #ccc;
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .drop-zone.drag-over {
+            background: #f5f5f5;
+            border-color: black;
+            border-style: solid;
+        }
+        
+        .drop-zone-insert-indicator {
+            height: 4px;
+            background: black;
+            margin: 5px 0;
+            border-radius: 2px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .drop-zone-insert-indicator.visible {
+            opacity: 1;
+        }
+
+        .drop-zone-empty {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+            font-size: 14px;
+        }
+
+        .workout-exercise {
+            border: 1px solid black;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: white;
+            cursor: move;
+            position: relative;
+        }
+        
+        .workout-exercise::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        
+        .workout-exercise.drag-over-top::before {
+            background: black;
+            height: 4px;
+        }
+
+        .workout-exercise-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .drag-handle {
+            cursor: move;
+            margin-right: 8px;
+            color: #666;
+            font-size: 18px;
+        }
+
+        .workout-exercise-header .exercise-icon {
+            font-size: 18px;
+        }
+
+        .workout-exercise-header .exercise-name {
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .exercise-actions {
+            margin-left: auto;
+            display: flex;
+            gap: 5px;
+        }
+
+        .remove-btn, .duplicate-btn {
+            background: black;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .duplicate-btn {
+            background: white;
+            color: black;
+            border: 1px solid black;
+        }
+
+        .remove-btn:hover {
+            background: #333;
+        }
+
+        .duplicate-btn:hover {
+            background: #f5f5f5;
+        }
+
+        .workout-exercise-config {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+
+        .config-field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .config-field label {
+            font-size: 11px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .config-field input {
+            padding: 6px;
+            border: 1px solid black;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .workout-exercise.dragging {
+            opacity: 0.5;
+        }
+
+        .actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: 2px solid black;
+            border-radius: 4px;
+            background: black;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .btn:hover {
+            background: #333;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: black;
+        }
+
+        .btn-secondary:hover {
+            background: #f5f5f5;
+        }
+
+        input:focus {
+            outline: 2px solid black;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>CrossFit Workout Builder</h1>
+            <input type="text" class="workout-name" id="workoutName" placeholder="Workout name (e.g., WOD 2024-11-08)">
+        </header>
+
+        <div class="main-grid">
+            <div class="panel workout-builder">
+                <h2>Workout Builder</h2>
+                <div class="drop-zone" id="dropZone">
+                    <div class="drop-zone-empty">Drag exercises here to build your workout</div>
+                </div>
+                <div class="actions">
+                    <button class="btn" id="exportBtn">Export PDF</button>
+                    <button class="btn btn-secondary" id="clearBtn">Clear Workout</button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>Exercise Catalog</h2>
+                <div class="catalog" id="catalog"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const exercises = {
+            "Cardio": [
+                { name: "Rowing", icon: "🚣" },
+                { name: "Running", icon: "🏃" },
+                { name: "Assault Bike", icon: "🚴" },
+                { name: "Jump Rope", icon: "🪢" },
+                { name: "Burpees", icon: "💥" },
+            ],
+            "Weightlifting": [
+                { name: "Deadlift", icon: "⚡" },
+                { name: "Back Squat", icon: "🦵" },
+                { name: "Front Squat", icon: "🏋️" },
+                { name: "Clean", icon: "💪" },
+                { name: "Snatch", icon: "🎯" },
+                { name: "Clean & Jerk", icon: "🔥" },
+                { name: "Overhead Press", icon: "⬆️" },
+                { name: "Push Press", icon: "📈" },
+            ],
+            "Gymnastics": [
+                { name: "Pull-ups", icon: "↑" },
+                { name: "Muscle-ups", icon: "⭕" },
+                { name: "Handstand Push-ups", icon: "🤸" },
+                { name: "Toes to Bar", icon: "🎪" },
+                { name: "Box Jumps", icon: "📦" },
+                { name: "Pistol Squats", icon: "🦿" },
+            ],
+            "Core": [
+                { name: "Sit-ups", icon: "🔄" },
+                { name: "Plank", icon: "━" },
+                { name: "Russian Twists", icon: "🌀" },
+                { name: "V-ups", icon: "✓" },
+            ],
+            "Other": [
+                { name: "Wall Balls", icon: "🏀" },
+                { name: "Kettlebell Swings", icon: "⚫" },
+                { name: "Thrusters", icon: "🚀" },
+                { name: "Rest", icon: "⏸️" },
+            ]
+        };
+
+        let workoutExercises = [];
+        let exerciseCounter = 0;
+
+        function renderCatalog() {
+            const catalog = document.getElementById('catalog');
+            catalog.innerHTML = '';
+
+            for (const [category, items] of Object.entries(exercises)) {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'exercise-category';
+
+                const title = document.createElement('div');
+                title.className = 'category-title';
+                title.textContent = category;
+                categoryDiv.appendChild(title);
+
+                items.forEach(exercise => {
+                    const item = document.createElement('div');
+                    item.className = 'exercise-item';
+                    item.draggable = true;
+                    item.dataset.exercise = JSON.stringify(exercise);
+
+                    item.innerHTML = `
+                        <span class="exercise-icon">${exercise.icon}</span>
+                        <span class="exercise-name">${exercise.name}</span>
+                    `;
+
+                    item.addEventListener('dragstart', handleDragStart);
+                    item.addEventListener('dragend', handleDragEnd);
+
+                    categoryDiv.appendChild(item);
+                });
+
+                catalog.appendChild(categoryDiv);
+            }
+        }
+
+        function handleDragStart(e) {
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'copy';
+            e.dataTransfer.setData('text/plain', e.target.dataset.exercise);
+            
+            // Set flags for catalog drag
+            draggedFromCatalog = true;
+            catalogExerciseData = JSON.parse(e.target.dataset.exercise);
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+            draggedFromCatalog = false;
+            catalogExerciseData = null;
+        }
+
+        const dropZone = document.getElementById('dropZone');
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            
+            // Check if we're dragging over the empty space (not over an exercise)
+            const exerciseElements = Array.from(dropZone.querySelectorAll('.workout-exercise'));
+            const isOverExercise = exerciseElements.some(el => {
+                const rect = el.getBoundingClientRect();
+                return e.clientY >= rect.top && e.clientY <= rect.bottom;
+            });
+            
+            if (!isOverExercise) {
+                e.dataTransfer.dropEffect = draggedFromCatalog ? 'copy' : 'move';
+                dropZone.classList.add('drag-over');
+            } else {
+                dropZone.classList.remove('drag-over');
+            }
+        });
+
+        dropZone.addEventListener('dragleave', (e) => {
+            // Only remove if we're leaving the drop zone entirely
+            if (!dropZone.contains(e.relatedTarget)) {
+                dropZone.classList.remove('drag-over');
+            }
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            
+            // Check if we dropped on empty space or at the end
+            const exerciseElements = Array.from(dropZone.querySelectorAll('.workout-exercise'));
+            const isOverExercise = exerciseElements.some(el => {
+                const rect = el.getBoundingClientRect();
+                return e.clientY >= rect.top && e.clientY <= rect.bottom;
+            });
+            
+            if (!isOverExercise) {
+                // Dropped in empty space or at end
+                if (draggedFromCatalog && catalogExerciseData) {
+                    const exerciseData = catalogExerciseData;
+                    addExerciseToWorkout(exerciseData);
+                } else if (draggedExerciseId !== null) {
+                    // Move to end
+                    const draggedIndex = workoutExercises.findIndex(ex => ex.id === draggedExerciseId);
+                    const [removed] = workoutExercises.splice(draggedIndex, 1);
+                    workoutExercises.push(removed);
+                    renderWorkout();
+                }
+            }
+        });
+
+        function addExerciseToWorkout(exercise) {
+            const id = exerciseCounter++;
+            workoutExercises.push({
+                id,
+                ...exercise,
+                sets: '',
+                reps: '',
+                weight: ''
+            });
+            renderWorkout();
+        }
+
+        function removeExercise(id) {
+            workoutExercises = workoutExercises.filter(ex => ex.id !== id);
+            renderWorkout();
+        }
+
+        function updateExercise(id, field, value) {
+            const exercise = workoutExercises.find(ex => ex.id === id);
+            if (exercise) {
+                exercise[field] = value;
+            }
+        }
+
+        function renderWorkout() {
+            const empty = dropZone.querySelector('.drop-zone-empty');
+            
+            if (workoutExercises.length === 0) {
+                if (!empty) {
+                    dropZone.innerHTML = '<div class="drop-zone-empty">Drag exercises here to build your workout</div>';
+                }
+                return;
+            }
+
+            if (empty) {
+                empty.remove();
+            }
+
+            const existingExercises = dropZone.querySelectorAll('.workout-exercise');
+            existingExercises.forEach(el => el.remove());
+
+            workoutExercises.forEach((exercise, index) => {
+                const div = document.createElement('div');
+                div.className = 'workout-exercise';
+                div.draggable = true;
+                div.dataset.exerciseId = exercise.id;
+                div.innerHTML = `
+                    <div class="workout-exercise-header">
+                        <span class="drag-handle">⋮⋮</span>
+                        <span class="exercise-icon">${exercise.icon}</span>
+                        <span class="exercise-name">${exercise.name}</span>
+                        <div class="exercise-actions">
+                            <button class="duplicate-btn" onclick="duplicateExercise(${exercise.id})">Duplicate</button>
+                            <button class="remove-btn" onclick="removeExercise(${exercise.id})">Remove</button>
+                        </div>
+                    </div>
+                    <div class="workout-exercise-config">
+                        <div class="config-field">
+                            <label>Sets/Rounds</label>
+                            <input type="text" value="${exercise.sets}" 
+                                   onchange="updateExercise(${exercise.id}, 'sets', this.value)"
+                                   placeholder="e.g., 3 or AMRAP">
+                        </div>
+                        <div class="config-field">
+                            <label>Reps</label>
+                            <input type="text" value="${exercise.reps}" 
+                                   onchange="updateExercise(${exercise.id}, 'reps', this.value)"
+                                   placeholder="e.g., 10">
+                        </div>
+                        <div class="config-field">
+                            <label>Weight/Time</label>
+                            <input type="text" value="${exercise.weight}" 
+                                   onchange="updateExercise(${exercise.id}, 'weight', this.value)"
+                                   placeholder="e.g., 135 lbs">
+                        </div>
+                    </div>
+                `;
+                
+                // Add drag event listeners for reordering
+                div.addEventListener('dragstart', handleWorkoutDragStart);
+                div.addEventListener('dragend', handleWorkoutDragEnd);
+                div.addEventListener('dragover', handleWorkoutDragOver);
+                div.addEventListener('drop', handleWorkoutDrop);
+                div.addEventListener('dragleave', handleWorkoutDragLeave);
+                
+                dropZone.appendChild(div);
+            });
+        }
+
+        let draggedExerciseId = null;
+        let draggedFromCatalog = false;
+        let catalogExerciseData = null;
+
+        function handleWorkoutDragStart(e) {
+            draggedExerciseId = parseInt(e.currentTarget.dataset.exerciseId);
+            draggedFromCatalog = false;
+            e.currentTarget.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleWorkoutDragEnd(e) {
+            e.currentTarget.classList.remove('dragging');
+            document.querySelectorAll('.workout-exercise').forEach(el => {
+                el.classList.remove('drag-over-top');
+            });
+            draggedExerciseId = null;
+            draggedFromCatalog = false;
+            catalogExerciseData = null;
+        }
+
+        function handleWorkoutDragOver(e) {
+            e.preventDefault();
+            
+            // Determine if we should drop above or below based on mouse position
+            const rect = e.currentTarget.getBoundingClientRect();
+            const midpoint = rect.top + rect.height / 2;
+            
+            // Clear all drag-over states
+            document.querySelectorAll('.workout-exercise').forEach(el => {
+                el.classList.remove('drag-over-top');
+            });
+            
+            // Add drag-over state to indicate drop position
+            if (e.clientY < midpoint) {
+                e.currentTarget.classList.add('drag-over-top');
+            }
+            
+            e.dataTransfer.dropEffect = draggedFromCatalog ? 'copy' : 'move';
+        }
+
+        function handleWorkoutDragLeave(e) {
+            // Only remove if we're actually leaving the element
+            if (!e.currentTarget.contains(e.relatedTarget)) {
+                e.currentTarget.classList.remove('drag-over-top');
+            }
+        }
+
+        function handleWorkoutDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const dropTarget = e.currentTarget;
+            const targetId = parseInt(dropTarget.dataset.exerciseId);
+            const targetIndex = workoutExercises.findIndex(ex => ex.id === targetId);
+            
+            // Determine drop position based on mouse Y
+            const rect = dropTarget.getBoundingClientRect();
+            const midpoint = rect.top + rect.height / 2;
+            const dropBefore = e.clientY < midpoint;
+            
+            dropTarget.classList.remove('drag-over-top');
+            
+            if (draggedFromCatalog && catalogExerciseData) {
+                // Adding from catalog
+                const newExercise = {
+                    id: exerciseCounter++,
+                    ...catalogExerciseData,
+                    sets: '',
+                    reps: '',
+                    weight: ''
+                };
+                
+                const insertIndex = dropBefore ? targetIndex : targetIndex + 1;
+                workoutExercises.splice(insertIndex, 0, newExercise);
+                
+            } else if (draggedExerciseId !== null && draggedExerciseId !== targetId) {
+                // Reordering within workout
+                const draggedIndex = workoutExercises.findIndex(ex => ex.id === draggedExerciseId);
+                const [removed] = workoutExercises.splice(draggedIndex, 1);
+                
+                // Recalculate target index after removal
+                const newTargetIndex = workoutExercises.findIndex(ex => ex.id === targetId);
+                const insertIndex = dropBefore ? newTargetIndex : newTargetIndex + 1;
+                
+                workoutExercises.splice(insertIndex, 0, removed);
+            }
+            
+            renderWorkout();
+        }
+
+        function duplicateExercise(id) {
+            const exercise = workoutExercises.find(ex => ex.id === id);
+            if (exercise) {
+                const newExercise = {
+                    ...exercise,
+                    id: exerciseCounter++
+                };
+                const index = workoutExercises.findIndex(ex => ex.id === id);
+                workoutExercises.splice(index + 1, 0, newExercise);
+                renderWorkout();
+            }
+        }
+
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            if (workoutExercises.length === 0 || confirm('Clear all exercises from workout?')) {
+                workoutExercises = [];
+                renderWorkout();
+            }
+        });
+
+        document.getElementById('exportBtn').addEventListener('click', () => {
+            if (workoutExercises.length === 0) {
+                alert('Add exercises to your workout before exporting');
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            const workoutName = document.getElementById('workoutName').value || 'CrossFit Workout';
+            const date = new Date().toLocaleDateString();
+            
+            doc.setFontSize(20);
+            doc.text(workoutName, 20, 20);
+            
+            doc.setFontSize(10);
+            doc.text(date, 20, 28);
+            
+            doc.setLineWidth(0.5);
+            doc.line(20, 32, 190, 32);
+            
+            let y = 45;
+            doc.setFontSize(12);
+            
+            workoutExercises.forEach((exercise, index) => {
+                if (y > 270) {
+                    doc.addPage();
+                    y = 20;
+                }
+                
+                doc.setFont(undefined, 'bold');
+                doc.text(`${index + 1}. ${exercise.name}`, 20, y);
+                
+                doc.setFont(undefined, 'normal');
+                y += 7;
+                
+                const details = [];
+                if (exercise.sets) details.push(`Sets: ${exercise.sets}`);
+                if (exercise.reps) details.push(`Reps: ${exercise.reps}`);
+                if (exercise.weight) details.push(`Weight: ${exercise.weight}`);
+                
+                if (details.length > 0) {
+                    doc.text(details.join(' | '), 25, y);
+                    y += 7;
+                }
+                
+                y += 5;
+            });
+            
+            doc.save(`${workoutName.replace(/\s+/g, '-').toLowerCase()}.pdf`);
+        });
+
+        renderCatalog();
+    </script>
+</body>
+</html>
