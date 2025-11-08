@@ -21,7 +21,7 @@
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1000px;
             margin: 0 auto;
         }
 
@@ -70,13 +70,6 @@
         .superset-catalog {
             padding: 0 0 20px 0;
             margin-bottom: 20px;
-            border-bottom: 1px solid #ddd;
-        }
-
-        .superset-catalog h3 {
-            font-size: 16px;
-            margin-bottom: 10px;
-            font-weight: 600;
         }
 
         .superset-types {
@@ -256,20 +249,6 @@
             display: flex;
             gap: 5px;
             flex-shrink: 0;
-        }
-
-        .remove-btn {
-            background: black;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 5px 10px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-
-        .remove-btn:hover {
-            background: #333;
         }
 
         .superset-config {
@@ -500,11 +479,11 @@
 
             <div class="panel">
                 <div class="superset-catalog">
-                    <h3>Supersets</h3>
+                    <h2>Supersets</h2>
                     <div class="superset-types" id="supersetTypes"></div>
                 </div>
-                
-                <h2>Exercise Catalog</h2>
+
+                <h2>Exercises</h2>
                 <div class="catalog" id="catalog"></div>
             </div>
         </div>
@@ -567,29 +546,35 @@
         };
 
         const supersetTypes = [
-            { 
-                name: "For Time", 
+            {
+                name: "For Time",
                 fields: ["rounds", "timeEstimate"],
                 defaults: { rounds: "", timeEstimate: "" },
                 format: (config) => `${config.rounds || '_'}x For Time${config.timeEstimate ? ` ca. ${config.timeEstimate} min` : ''}`
             },
-            { 
-                name: "AMRAP", 
+            {
+                name: "AMRAP",
                 fields: ["duration"],
                 defaults: { duration: "" },
                 format: (config) => `${config.duration || '_'} min AMRAP`
             },
-            { 
-                name: "EMOM", 
+            {
+                name: "EMOM",
                 fields: ["duration", "interval"],
                 defaults: { duration: "", interval: "1" },
                 format: (config) => `${config.duration || '_'} min EMOM (every ${config.interval || '1'} min)`
             },
-            { 
-                name: "Chipper", 
+            {
+                name: "Chipper",
                 fields: ["timeEstimate"],
                 defaults: { timeEstimate: "" },
                 format: (config) => `Chipper${config.timeEstimate ? ` ca. ${config.timeEstimate} min` : ''}`
+            },
+            {
+                name: "Sequence",
+                fields: ["sequence", "timeEstimate"],
+                defaults: { sequence: "", timeEstimate: "" },
+                format: (config) => `${config.sequence || '_'} Sequence${config.timeEstimate ? ` ca. ${config.timeEstimate} min` : ''}`
             }
         ];
 
@@ -823,14 +808,33 @@
                         <span>Chipper</span>
                         <div class="superset-config-inline">
                             <span>ca.</span>
-                            <input type="text" value="${superset.config.timeEstimate || ''}" 
+                            <input type="text" value="${superset.config.timeEstimate || ''}"
+                                   onchange="updateSupersetConfig(${superset.id}, 'timeEstimate', this.value)"
+                                   placeholder="15">
+                            <span>min</span>
+                        </div>
+                    `;
+                } else if (superset.type.name === 'Sequence') {
+                    configHTML += `
+                        <div class="superset-config-inline">
+                            <input type="text" value="${superset.config.sequence || ''}"
+                                   onchange="updateSupersetConfig(${superset.id}, 'sequence', this.value)"
+                                   placeholder="21-15-9"
+                                   style="width: 80px;">
+                            <span>Sequence</span>
+                        </div>
+                    `;
+                    configHTML += `
+                        <div class="superset-config-inline">
+                            <span>ca.</span>
+                            <input type="text" value="${superset.config.timeEstimate || ''}"
                                    onchange="updateSupersetConfig(${superset.id}, 'timeEstimate', this.value)"
                                    placeholder="15">
                             <span>min</span>
                         </div>
                     `;
                 }
-                
+
                 configHTML += '</div>';
 
                 supersetDiv.innerHTML = `
@@ -841,7 +845,9 @@
                                onchange="updateSupersetTitle(${superset.id}, this.value)"
                                placeholder="Superset name">
                         <div class="superset-actions">
-                            <button class="remove-btn" onclick="removeSuperset(${superset.id})">Remove</button>
+                            <button class="icon-btn" onclick="removeSuperset(${superset.id})" title="Remove">
+                                <span class="material-icons-round">delete</span>
+                            </button>
                         </div>
                     </div>
                     ${configHTML}
@@ -1282,8 +1288,12 @@
                 } else if (superset.type.name === 'Chipper') {
                     const time = superset.config.timeEstimate;
                     description = `Chipper${time ? ` ca. ${time} min` : ''}`;
+                } else if (superset.type.name === 'Sequence') {
+                    const sequence = superset.config.sequence || '_';
+                    const time = superset.config.timeEstimate;
+                    description = `${sequence} Sequence${time ? ` ca. ${time} min` : ''}`;
                 }
-                
+
                 doc.text(description, 20, y);
                 y += 10;
                 
