@@ -1486,9 +1486,456 @@
             debouncedUpdateURL();
         });
 
+        // Touch Support Implementation
+        let touchState = {
+            active: false,
+            clone: null,
+            startX: 0,
+            startY: 0,
+            currentX: 0,
+            currentY: 0,
+            type: null, // 'superset-type', 'exercise-pill', 'superset', 'exercise'
+            data: null,
+            sourceElement: null
+        };
+
+        function createTouchClone(element, x, y) {
+            const clone = element.cloneNode(true);
+            clone.style.position = 'fixed';
+            clone.style.left = x + 'px';
+            clone.style.top = y + 'px';
+            clone.style.opacity = '0.8';
+            clone.style.pointerEvents = 'none';
+            clone.style.zIndex = '10000';
+            clone.style.transform = 'scale(1.05)';
+            clone.style.transition = 'none';
+            document.body.appendChild(clone);
+            return clone;
+        }
+
+        function updateTouchClone(x, y) {
+            if (touchState.clone) {
+                touchState.clone.style.left = x + 'px';
+                touchState.clone.style.top = y + 'px';
+            }
+        }
+
+        function removeTouchClone() {
+            if (touchState.clone) {
+                touchState.clone.remove();
+                touchState.clone = null;
+            }
+        }
+
+        function getTouchPoint(e) {
+            return e.touches && e.touches.length > 0 ? e.touches[0] : e.changedTouches[0];
+        }
+
+        function getElementAtPoint(x, y) {
+            // Temporarily hide the clone to get the element underneath
+            if (touchState.clone) {
+                touchState.clone.style.display = 'none';
+            }
+            const element = document.elementFromPoint(x, y);
+            if (touchState.clone) {
+                touchState.clone.style.display = 'block';
+            }
+            return element;
+        }
+
+        function handleTouchStart(e, type) {
+            if (e.touches.length > 1) return; // Only single touch
+
+            const touch = getTouchPoint(e);
+            touchState.active = true;
+            touchState.startX = touch.clientX;
+            touchState.startY = touch.clientY;
+            touchState.currentX = touch.clientX;
+            touchState.currentY = touch.clientY;
+            touchState.type = type;
+            touchState.sourceElement = e.currentTarget;
+
+            // Store data based on type
+            if (type === 'superset-type') {
+                touchState.data = JSON.parse(e.currentTarget.dataset.supersetType);
+            } else if (type === 'exercise-pill') {
+                touchState.data = JSON.parse(e.currentTarget.dataset.exercise);
+            } else if (type === 'superset') {
+                touchState.data = parseInt(e.currentTarget.dataset.supersetId);
+            } else if (type === 'exercise') {
+                touchState.data = {
+                    exerciseId: parseInt(e.currentTarget.dataset.exerciseId),
+                    supersetId: parseInt(e.currentTarget.dataset.supersetId)
+                };
+            }
+
+            // Add visual feedback to source
+            e.currentTarget.style.opacity = '0.5';
+        }
+
+        function handleTouchMove(e) {
+            if (!touchState.active) return;
+
+            e.preventDefault(); // Prevent scrolling
+
+            const touch = getTouchPoint(e);
+            touchState.currentX = touch.clientX;
+            touchState.currentY = touch.clientY;
+
+            // Create clone on first move (if dragged more than 5px)
+            const dx = touchState.currentX - touchState.startX;
+            const dy = touchState.currentY - touchState.startY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (!touchState.clone && distance > 5) {
+                touchState.clone = createTouchClone(
+                    touchState.sourceElement,
+                    touchState.currentX - touchState.sourceElement.offsetWidth / 2,
+                    touchState.currentY - touchState.sourceElement.offsetHeight / 2
+                );
+            }
+
+            if (touchState.clone) {
+                updateTouchClone(
+                    touchState.currentX - touchState.clone.offsetWidth / 2,
+                    touchState.currentY - touchState.clone.offsetHeight / 2
+                );
+            }
+
+            // Update drop indicators
+            updateTouchDropIndicators(touchState.currentX, touchState.currentY);
+        }
+
+        function updateTouchDropIndicators(x, y) {
+            // Clear all drop indicators
+            document.querySelectorAll('.superset-container').forEach(el => {
+                el.classList.remove('drag-over-top');
+            });
+            document.querySelectorAll('.workout-exercise').forEach(el => {
+                el.classList.remove('drag-over-top');
+            });
+            document.querySelectorAll('.superset-exercises').forEach(el => {
+                el.classList.remove('drag-over');
+            });
+            dropZone.classList.remove('drag-over');
+
+            const element = getElementAtPoint(x, y);
+            if (!element) return;
+
+            // Handle different drop target types
+            if (touchState.type === 'superset-type') {
+                // Dropping on main drop zone
+                const supersetContainer = element.closest('.superset-container');
+                if (!supersetContainer && element.closest('.drop-zone')) {
+                    dropZone.classList.add('drag-over');
+                } else if (supersetContainer) {
+                    const rect = supersetContainer.getBoundingClientRect();
+                    const midpoint = rect.top + rect.height / 2;
+                    if (y < midpoint) {
+                        supersetContainer.classList.add('drag-over-top');
+                    }
+                }
+            } else if (touchState.type === 'exercise-pill') {
+                // Dropping on superset exercises container
+                const exerciseElement = element.closest('.workout-exercise');
+                const exercisesContainer = element.closest('.superset-exercises');
+
+                if (exerciseElement) {
+                    const rect = exerciseElement.getBoundingClientRect();
+                    const midpoint = rect.top + rect.height / 2;
+                    if (y < midpoint) {
+                        exerciseElement.classList.add('drag-over-top');
+                    }
+                } else if (exercisesContainer && !exerciseElement) {
+                    exercisesContainer.classList.add('drag-over');
+                }
+            } else if (touchState.type === 'superset') {
+                // Reordering supersets
+                const supersetContainer = element.closest('.superset-container');
+                if (supersetContainer && parseInt(supersetContainer.dataset.supersetId) !== touchState.data) {
+                    const rect = supersetContainer.getBoundingClientRect();
+                    const midpoint = rect.top + rect.height / 2;
+                    if (y < midpoint) {
+                        supersetContainer.classList.add('drag-over-top');
+                    }
+                }
+            } else if (touchState.type === 'exercise') {
+                // Reordering exercises
+                const exerciseElement = element.closest('.workout-exercise');
+                const exercisesContainer = element.closest('.superset-exercises');
+
+                if (exerciseElement) {
+                    const currentExerciseId = parseInt(exerciseElement.dataset.exerciseId);
+                    if (currentExerciseId !== touchState.data.exerciseId) {
+                        const rect = exerciseElement.getBoundingClientRect();
+                        const midpoint = rect.top + rect.height / 2;
+                        if (y < midpoint) {
+                            exerciseElement.classList.add('drag-over-top');
+                        }
+                    }
+                } else if (exercisesContainer && !exerciseElement) {
+                    exercisesContainer.classList.add('drag-over');
+                }
+            }
+        }
+
+        function handleTouchEnd(e) {
+            if (!touchState.active) return;
+
+            const touch = getTouchPoint(e);
+            const element = getElementAtPoint(touch.clientX, touch.clientY);
+
+            // Restore source element opacity
+            if (touchState.sourceElement) {
+                touchState.sourceElement.style.opacity = '';
+            }
+
+            // Process the drop
+            if (element && touchState.clone) {
+                processTouchDrop(element, touch.clientX, touch.clientY);
+            }
+
+            // Clear drop indicators
+            document.querySelectorAll('.superset-container').forEach(el => {
+                el.classList.remove('drag-over-top');
+            });
+            document.querySelectorAll('.workout-exercise').forEach(el => {
+                el.classList.remove('drag-over-top');
+            });
+            document.querySelectorAll('.superset-exercises').forEach(el => {
+                el.classList.remove('drag-over');
+            });
+            dropZone.classList.remove('drag-over');
+
+            // Clean up
+            removeTouchClone();
+            touchState.active = false;
+            touchState.type = null;
+            touchState.data = null;
+            touchState.sourceElement = null;
+        }
+
+        function processTouchDrop(element, x, y) {
+            if (touchState.type === 'superset-type') {
+                const supersetContainer = element.closest('.superset-container');
+                if (!supersetContainer && element.closest('.drop-zone')) {
+                    // Drop on empty space - add to end
+                    addSupersetToWorkout(touchState.data);
+                } else if (supersetContainer) {
+                    // Drop on/between supersets - insert at position
+                    const targetId = parseInt(supersetContainer.dataset.supersetId);
+                    const rect = supersetContainer.getBoundingClientRect();
+                    const midpoint = rect.top + rect.height / 2;
+                    const dropBefore = y < midpoint;
+
+                    const newSuperset = {
+                        id: supersetCounter++,
+                        type: touchState.data,
+                        title: '',
+                        config: { ...touchState.data.defaults },
+                        exercises: []
+                    };
+
+                    const targetIndex = workoutSupersets.findIndex(s => s.id === targetId);
+                    const insertIndex = dropBefore ? targetIndex : targetIndex + 1;
+                    workoutSupersets.splice(insertIndex, 0, newSuperset);
+                    renderWorkout();
+                    debouncedUpdateURL();
+                }
+            } else if (touchState.type === 'exercise-pill') {
+                const exerciseElement = element.closest('.workout-exercise');
+                const exercisesContainer = element.closest('.superset-exercises');
+
+                if (exerciseElement) {
+                    // Drop on exercise - insert at position
+                    const targetExerciseId = parseInt(exerciseElement.dataset.exerciseId);
+                    const targetSupersetId = parseInt(exerciseElement.dataset.supersetId);
+                    const targetSuperset = workoutSupersets.find(s => s.id === targetSupersetId);
+
+                    if (targetSuperset) {
+                        const rect = exerciseElement.getBoundingClientRect();
+                        const midpoint = rect.top + rect.height / 2;
+                        const dropBefore = y < midpoint;
+
+                        const newExercise = {
+                            id: exerciseCounter++,
+                            ...touchState.data,
+                            reps: '',
+                            weight: ''
+                        };
+
+                        const targetIndex = targetSuperset.exercises.findIndex(ex => ex.id === targetExerciseId);
+                        const insertIndex = dropBefore ? targetIndex : targetIndex + 1;
+                        targetSuperset.exercises.splice(insertIndex, 0, newExercise);
+                        renderWorkout();
+                        debouncedUpdateURL();
+                    }
+                } else if (exercisesContainer) {
+                    // Drop on empty container - add to end
+                    const supersetId = parseInt(exercisesContainer.dataset.supersetId);
+                    const superset = workoutSupersets.find(s => s.id === supersetId);
+
+                    if (superset) {
+                        const newExercise = {
+                            id: exerciseCounter++,
+                            ...touchState.data,
+                            reps: '',
+                            weight: ''
+                        };
+                        superset.exercises.push(newExercise);
+                        renderWorkout();
+                        debouncedUpdateURL();
+                    }
+                }
+            } else if (touchState.type === 'superset') {
+                const supersetContainer = element.closest('.superset-container');
+                if (supersetContainer) {
+                    const targetId = parseInt(supersetContainer.dataset.supersetId);
+                    if (targetId !== touchState.data) {
+                        const rect = supersetContainer.getBoundingClientRect();
+                        const midpoint = rect.top + rect.height / 2;
+                        const dropBefore = y < midpoint;
+
+                        const draggedIndex = workoutSupersets.findIndex(s => s.id === touchState.data);
+                        const [removed] = workoutSupersets.splice(draggedIndex, 1);
+
+                        const newTargetIndex = workoutSupersets.findIndex(s => s.id === targetId);
+                        const insertIndex = dropBefore ? newTargetIndex : newTargetIndex + 1;
+
+                        workoutSupersets.splice(insertIndex, 0, removed);
+                        renderWorkout();
+                        debouncedUpdateURL();
+                    }
+                }
+            } else if (touchState.type === 'exercise') {
+                const exerciseElement = element.closest('.workout-exercise');
+                const exercisesContainer = element.closest('.superset-exercises');
+
+                if (exerciseElement) {
+                    // Drop on exercise - insert at position
+                    const targetExerciseId = parseInt(exerciseElement.dataset.exerciseId);
+                    const targetSupersetId = parseInt(exerciseElement.dataset.supersetId);
+                    const targetSuperset = workoutSupersets.find(s => s.id === targetSupersetId);
+
+                    if (targetSuperset && targetExerciseId !== touchState.data.exerciseId) {
+                        // Find source exercise
+                        let sourceSuperset = null;
+                        let sourceExercise = null;
+                        let sourceIndex = -1;
+
+                        for (const superset of workoutSupersets) {
+                            const index = superset.exercises.findIndex(ex => ex.id === touchState.data.exerciseId);
+                            if (index !== -1) {
+                                sourceSuperset = superset;
+                                sourceExercise = superset.exercises[index];
+                                sourceIndex = index;
+                                break;
+                            }
+                        }
+
+                        if (sourceSuperset && sourceExercise) {
+                            const rect = exerciseElement.getBoundingClientRect();
+                            const midpoint = rect.top + rect.height / 2;
+                            const dropBefore = y < midpoint;
+
+                            sourceSuperset.exercises.splice(sourceIndex, 1);
+
+                            let targetIndex = targetSuperset.exercises.findIndex(ex => ex.id === targetExerciseId);
+                            if (sourceSuperset.id === targetSupersetId && sourceIndex < targetIndex) {
+                                targetIndex--;
+                            }
+
+                            const insertIndex = dropBefore ? targetIndex : targetIndex + 1;
+                            targetSuperset.exercises.splice(insertIndex, 0, sourceExercise);
+                            renderWorkout();
+                            debouncedUpdateURL();
+                        }
+                    }
+                } else if (exercisesContainer) {
+                    // Drop on empty container - move to end
+                    const targetSupersetId = parseInt(exercisesContainer.dataset.supersetId);
+                    const targetSuperset = workoutSupersets.find(s => s.id === targetSupersetId);
+
+                    if (targetSuperset) {
+                        // Find source exercise
+                        let sourceSuperset = null;
+                        let sourceExercise = null;
+                        let sourceIndex = -1;
+
+                        for (const superset of workoutSupersets) {
+                            const index = superset.exercises.findIndex(ex => ex.id === touchState.data.exerciseId);
+                            if (index !== -1) {
+                                sourceSuperset = superset;
+                                sourceExercise = superset.exercises[index];
+                                sourceIndex = index;
+                                break;
+                            }
+                        }
+
+                        if (sourceSuperset && sourceExercise) {
+                            sourceSuperset.exercises.splice(sourceIndex, 1);
+                            targetSuperset.exercises.push(sourceExercise);
+                            renderWorkout();
+                            debouncedUpdateURL();
+                        }
+                    }
+                }
+            }
+        }
+
+        function addTouchHandlers() {
+            // Add touch handlers to superset types
+            const supersetTypesContainer = document.getElementById('supersetTypes');
+            supersetTypesContainer.addEventListener('touchstart', (e) => {
+                if (e.target.classList.contains('superset-type')) {
+                    handleTouchStart(e, 'superset-type');
+                }
+            }, { passive: false });
+
+            // Add touch handlers to exercise pills
+            const catalogContainer = document.getElementById('catalog');
+            catalogContainer.addEventListener('touchstart', (e) => {
+                if (e.target.classList.contains('exercise-pill') && !e.target.classList.contains('disabled')) {
+                    handleTouchStart(e, 'exercise-pill');
+                }
+            }, { passive: false });
+
+            // Global touch move and end handlers
+            document.addEventListener('touchmove', handleTouchMove, { passive: false });
+            document.addEventListener('touchend', handleTouchEnd, { passive: false });
+            document.addEventListener('touchcancel', handleTouchEnd, { passive: false });
+        }
+
+        // Modified renderWorkout to add touch handlers to dynamically created elements
+        const originalRenderWorkout = renderWorkout;
+        renderWorkout = function() {
+            originalRenderWorkout();
+
+            // Add touch handlers to superset containers
+            document.querySelectorAll('.superset-container').forEach(el => {
+                el.addEventListener('touchstart', (e) => {
+                    if (e.target.classList.contains('superset-drag-handle') ||
+                        e.target.closest('.superset-drag-handle')) {
+                        handleTouchStart(e, 'superset');
+                    }
+                }, { passive: false });
+            });
+
+            // Add touch handlers to exercise elements
+            document.querySelectorAll('.workout-exercise').forEach(el => {
+                el.addEventListener('touchstart', (e) => {
+                    if (e.target.classList.contains('drag-handle') ||
+                        e.target.closest('.drag-handle')) {
+                        handleTouchStart(e, 'exercise');
+                    }
+                }, { passive: false });
+            });
+        };
+
         // Initialize
         renderSupersetTypes();
         renderCatalog();
+        addTouchHandlers();
 
         // Load workout from URL if present
         loadWorkoutFromURL();
