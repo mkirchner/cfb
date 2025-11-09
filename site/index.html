@@ -1280,16 +1280,20 @@
 
         function updateURL() {
             if (workoutSupersets.length === 0) {
-                // Clear hash if workout is empty
-                if (window.location.hash) {
-                    history.replaceState(null, '', window.location.pathname + window.location.search);
+                // Clear query parameter if workout is empty
+                const url = new URL(window.location.href);
+                if (url.searchParams.has('w')) {
+                    url.searchParams.delete('w');
+                    history.replaceState(null, '', url.pathname + (url.search || ''));
                 }
                 return;
             }
 
             const encoded = encodeWorkoutToURL();
             if (encoded) {
-                history.replaceState(null, '', '#' + encoded);
+                const url = new URL(window.location.href);
+                url.searchParams.set('w', encoded);
+                history.replaceState(null, '', url.pathname + url.search);
             }
         }
 
@@ -1305,10 +1309,18 @@
         }
 
         function loadWorkoutFromURL() {
-            const hash = window.location.hash.substring(1);
-            if (!hash) return false;
+            // Try to get workout from query parameter first (new format)
+            const url = new URL(window.location.href);
+            let encoded = url.searchParams.get('w');
 
-            const workoutData = decodeWorkoutFromURL(hash);
+            // Fallback to hash for backward compatibility (old format)
+            if (!encoded && window.location.hash) {
+                encoded = window.location.hash.substring(1);
+            }
+
+            if (!encoded) return false;
+
+            const workoutData = decodeWorkoutFromURL(encoded);
             if (!workoutData) return false;
 
             try {
@@ -1330,6 +1342,12 @@
                     exerciseCounter = allExerciseIds.length > 0 ? Math.max(...allExerciseIds) + 1 : 0;
 
                     renderWorkout();
+
+                    // If loaded from hash, migrate to query parameter
+                    if (window.location.hash && !url.searchParams.has('w')) {
+                        updateURL();
+                    }
+
                     return true;
                 }
             } catch (e) {
