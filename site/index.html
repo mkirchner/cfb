@@ -6,6 +6,7 @@
     <title>CrossFit Workout Builder</title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -1250,6 +1251,77 @@
         }
 
         // URL Encoding/Decoding Functions
+
+        // Convert to compact format for smaller URLs
+        function toCompactFormat(workoutData) {
+            return {
+                v: 2, // version 2 (compressed)
+                n: workoutData.name || '',
+                s: workoutData.supersets.map(ss => {
+                    const compact = {
+                        i: ss.id,
+                        t: supersetTypes.findIndex(t => t.name === ss.type.name), // type index
+                        c: {} // only non-empty config values
+                    };
+
+                    // Only include non-empty title
+                    if (ss.title) compact.ti = ss.title;
+
+                    // Only include non-default config values
+                    for (const [key, value] of Object.entries(ss.config)) {
+                        if (value !== '' && value !== ss.type.defaults[key]) {
+                            compact.c[key] = value;
+                        }
+                    }
+
+                    // Compact exercises
+                    compact.e = ss.exercises.map(ex => {
+                        const compactEx = {
+                            i: ex.id,
+                            n: ex.name,
+                            ic: ex.icon
+                        };
+                        // Only include non-empty values
+                        if (ex.reps) compactEx.r = ex.reps;
+                        if (ex.weight) compactEx.w = ex.weight;
+                        if (ex.category) compactEx.c = ex.category;
+                        return compactEx;
+                    });
+
+                    return compact;
+                })
+            };
+        }
+
+        // Convert from compact format back to full format
+        function fromCompactFormat(compact) {
+            // Handle old uncompressed format (no version field)
+            if (!compact.v) {
+                return compact;
+            }
+
+            return {
+                name: compact.n || '',
+                supersets: compact.s.map(ss => {
+                    const type = supersetTypes[ss.t];
+                    return {
+                        id: ss.i,
+                        type: type,
+                        title: ss.ti || '',
+                        config: { ...type.defaults, ...ss.c },
+                        exercises: ss.e.map(ex => ({
+                            id: ex.i,
+                            name: ex.n,
+                            icon: ex.ic,
+                            reps: ex.r || '',
+                            weight: ex.w || '',
+                            category: ex.c
+                        }))
+                    };
+                })
+            };
+        }
+
         function encodeWorkoutToURL() {
             const workoutName = document.getElementById('workoutName').value;
             const workoutData = {
@@ -1258,8 +1330,20 @@
             };
 
             try {
-                const json = JSON.stringify(workoutData);
-                const encoded = btoa(encodeURIComponent(json));
+                // Convert to compact format
+                const compact = toCompactFormat(workoutData);
+                const json = JSON.stringify(compact);
+
+                // Compress using pako
+                const compressed = pako.deflate(json, { level: 9 });
+
+                // Convert to base64
+                const binary = String.fromCharCode.apply(null, compressed);
+                const encoded = btoa(binary)
+                    .replace(/\+/g, '-')
+                    .replace(/\//g, '_')
+                    .replace(/=+$/, ''); // URL-safe base64
+
                 return encoded;
             } catch (e) {
                 console.error('Error encoding workout:', e);
@@ -1269,9 +1353,34 @@
 
         function decodeWorkoutFromURL(encoded) {
             try {
-                const json = decodeURIComponent(atob(encoded));
-                const workoutData = JSON.parse(json);
-                return workoutData;
+                // First, try new compressed format with URL-safe base64
+                try {
+                    // Restore standard base64
+                    const base64 = encoded
+                        .replace(/-/g, '+')
+                        .replace(/_/g, '/');
+
+                    // Pad if necessary
+                    const padded = base64 + '=='.substring(0, (4 - base64.length % 4) % 4);
+
+                    // Decode base64 to binary
+                    const binary = atob(padded);
+                    const bytes = new Uint8Array(binary.length);
+                    for (let i = 0; i < binary.length; i++) {
+                        bytes[i] = binary.charCodeAt(i);
+                    }
+
+                    // Decompress
+                    const decompressed = pako.inflate(bytes, { to: 'string' });
+                    const compact = JSON.parse(decompressed);
+
+                    // Convert from compact format
+                    return fromCompactFormat(compact);
+                } catch (compressedError) {
+                    // Fallback to old uncompressed format
+                    const json = decodeURIComponent(atob(encoded));
+                    return JSON.parse(json);
+                }
             } catch (e) {
                 console.error('Error decoding workout:', e);
                 return null;
