@@ -1543,8 +1543,11 @@
             return element;
         }
 
-        function handleTouchStart(e, type) {
+        function handleTouchStart(e, type, sourceElement) {
             if (e.touches.length > 1) return; // Only single touch
+
+            e.preventDefault();
+            e.stopPropagation();
 
             const touch = getTouchPoint(e);
             touchState.active = true;
@@ -1553,24 +1556,24 @@
             touchState.currentX = touch.clientX;
             touchState.currentY = touch.clientY;
             touchState.type = type;
-            touchState.sourceElement = e.currentTarget;
+            touchState.sourceElement = sourceElement;
 
             // Store data based on type
             if (type === 'superset-type') {
-                touchState.data = JSON.parse(e.currentTarget.dataset.supersetType);
+                touchState.data = JSON.parse(sourceElement.dataset.supersetType);
             } else if (type === 'exercise-pill') {
-                touchState.data = JSON.parse(e.currentTarget.dataset.exercise);
+                touchState.data = JSON.parse(sourceElement.dataset.exercise);
             } else if (type === 'superset') {
-                touchState.data = parseInt(e.currentTarget.dataset.supersetId);
+                touchState.data = parseInt(sourceElement.dataset.supersetId);
             } else if (type === 'exercise') {
                 touchState.data = {
-                    exerciseId: parseInt(e.currentTarget.dataset.exerciseId),
-                    supersetId: parseInt(e.currentTarget.dataset.supersetId)
+                    exerciseId: parseInt(sourceElement.dataset.exerciseId),
+                    supersetId: parseInt(sourceElement.dataset.supersetId)
                 };
             }
 
             // Add visual feedback to source
-            e.currentTarget.style.opacity = '0.5';
+            sourceElement.style.opacity = '0.5';
         }
 
         function handleTouchMove(e) {
@@ -1888,7 +1891,7 @@
             const supersetTypesContainer = document.getElementById('supersetTypes');
             supersetTypesContainer.addEventListener('touchstart', (e) => {
                 if (e.target.classList.contains('superset-type')) {
-                    handleTouchStart(e, 'superset-type');
+                    handleTouchStart(e, 'superset-type', e.target);
                 }
             }, { passive: false });
 
@@ -1896,7 +1899,7 @@
             const catalogContainer = document.getElementById('catalog');
             catalogContainer.addEventListener('touchstart', (e) => {
                 if (e.target.classList.contains('exercise-pill') && !e.target.classList.contains('disabled')) {
-                    handleTouchStart(e, 'exercise-pill');
+                    handleTouchStart(e, 'exercise-pill', e.target);
                 }
             }, { passive: false });
 
@@ -1913,22 +1916,22 @@
 
             // Add touch handlers to superset containers
             document.querySelectorAll('.superset-container').forEach(el => {
-                el.addEventListener('touchstart', (e) => {
-                    if (e.target.classList.contains('superset-drag-handle') ||
-                        e.target.closest('.superset-drag-handle')) {
-                        handleTouchStart(e, 'superset');
-                    }
-                }, { passive: false });
+                const handle = el.querySelector('.superset-drag-handle');
+                if (handle) {
+                    handle.addEventListener('touchstart', (e) => {
+                        handleTouchStart(e, 'superset', el);
+                    }, { passive: false });
+                }
             });
 
             // Add touch handlers to exercise elements
             document.querySelectorAll('.workout-exercise').forEach(el => {
-                el.addEventListener('touchstart', (e) => {
-                    if (e.target.classList.contains('drag-handle') ||
-                        e.target.closest('.drag-handle')) {
-                        handleTouchStart(e, 'exercise');
-                    }
-                }, { passive: false });
+                const handle = el.querySelector('.drag-handle');
+                if (handle) {
+                    handle.addEventListener('touchstart', (e) => {
+                        handleTouchStart(e, 'exercise', el);
+                    }, { passive: false });
+                }
             });
         };
 
