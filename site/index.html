@@ -1339,10 +1339,21 @@
 
                 // Convert to base64
                 const binary = String.fromCharCode.apply(null, compressed);
-                const encoded = btoa(binary)
+                let encoded = btoa(binary)
                     .replace(/\+/g, '-')
                     .replace(/\//g, '_')
                     .replace(/=+$/, ''); // URL-safe base64
+
+                // Insert '*' every 250 characters to prevent link breaking in messaging apps
+                // This helps with iMessage and other apps that have issues with long URLs
+                const chunkSize = 250;
+                if (encoded.length > chunkSize) {
+                    const chunks = [];
+                    for (let i = 0; i < encoded.length; i += chunkSize) {
+                        chunks.push(encoded.substring(i, i + chunkSize));
+                    }
+                    encoded = chunks.join('*');
+                }
 
                 return encoded;
             } catch (e) {
@@ -1353,10 +1364,13 @@
 
         function decodeWorkoutFromURL(encoded) {
             try {
+                // Remove asterisk separators that were added every 250 characters
+                const cleanEncoded = encoded.replace(/\*/g, '');
+
                 // First, try new compressed format with URL-safe base64
                 try {
                     // Restore standard base64
-                    const base64 = encoded
+                    const base64 = cleanEncoded
                         .replace(/-/g, '+')
                         .replace(/_/g, '/');
 
@@ -1378,7 +1392,7 @@
                     return fromCompactFormat(compact);
                 } catch (compressedError) {
                     // Fallback to old uncompressed format
-                    const json = decodeURIComponent(atob(encoded));
+                    const json = decodeURIComponent(atob(cleanEncoded));
                     return JSON.parse(json);
                 }
             } catch (e) {
