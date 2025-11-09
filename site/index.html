@@ -473,6 +473,7 @@
                 </div>
                 <div class="actions">
                     <button class="btn" id="exportBtn">Export PDF</button>
+                    <button class="btn btn-secondary" id="shareBtn">Share Workout</button>
                     <button class="btn btn-secondary" id="clearBtn">Clear Workout</button>
                 </div>
             </div>
@@ -750,6 +751,7 @@
             };
             workoutSupersets.push(newSuperset);
             renderWorkout();
+            debouncedUpdateURL();
         }
 
         function renderWorkout() {
@@ -1014,6 +1016,7 @@
             
             workoutSupersets.splice(insertIndex, 0, removed);
             renderWorkout();
+            debouncedUpdateURL();
         }
 
         // Exercise Drag Handlers
@@ -1120,8 +1123,9 @@
                 const insertIndex = dropBefore ? newTargetIndex : newTargetIndex + 1;
                 targetSuperset.exercises.splice(insertIndex, 0, sourceExercise);
             }
-            
+
             renderWorkout();
+            debouncedUpdateURL();
         }
 
         // Exercise Container Drag Handlers
@@ -1181,6 +1185,7 @@
                 };
                 superset.exercises.push(newExercise);
                 renderWorkout();
+                debouncedUpdateURL();
             }
         }
 
@@ -1189,6 +1194,7 @@
             const superset = workoutSupersets.find(s => s.id === supersetId);
             if (superset) {
                 superset.title = value;
+                debouncedUpdateURL();
             }
         }
 
@@ -1196,12 +1202,14 @@
             const superset = workoutSupersets.find(s => s.id === supersetId);
             if (superset) {
                 superset.config[field] = value;
+                debouncedUpdateURL();
             }
         }
 
         function removeSuperset(supersetId) {
             workoutSupersets = workoutSupersets.filter(s => s.id !== supersetId);
             renderWorkout();
+            debouncedUpdateURL();
         }
 
         function updateExercise(supersetId, exerciseId, field, value) {
@@ -1210,6 +1218,7 @@
                 const exercise = superset.exercises.find(ex => ex.id === exerciseId);
                 if (exercise) {
                     exercise[field] = value;
+                    debouncedUpdateURL();
                 }
             }
         }
@@ -1219,6 +1228,7 @@
             if (superset) {
                 superset.exercises = superset.exercises.filter(ex => ex.id !== exerciseId);
                 renderWorkout();
+                debouncedUpdateURL();
             }
         }
 
@@ -1234,8 +1244,99 @@
                     const index = superset.exercises.findIndex(ex => ex.id === exerciseId);
                     superset.exercises.splice(index + 1, 0, newExercise);
                     renderWorkout();
+                    debouncedUpdateURL();
                 }
             }
+        }
+
+        // URL Encoding/Decoding Functions
+        function encodeWorkoutToURL() {
+            const workoutName = document.getElementById('workoutName').value;
+            const workoutData = {
+                name: workoutName,
+                supersets: workoutSupersets
+            };
+
+            try {
+                const json = JSON.stringify(workoutData);
+                const encoded = btoa(encodeURIComponent(json));
+                return encoded;
+            } catch (e) {
+                console.error('Error encoding workout:', e);
+                return null;
+            }
+        }
+
+        function decodeWorkoutFromURL(encoded) {
+            try {
+                const json = decodeURIComponent(atob(encoded));
+                const workoutData = JSON.parse(json);
+                return workoutData;
+            } catch (e) {
+                console.error('Error decoding workout:', e);
+                return null;
+            }
+        }
+
+        function updateURL() {
+            if (workoutSupersets.length === 0) {
+                // Clear hash if workout is empty
+                if (window.location.hash) {
+                    history.replaceState(null, '', window.location.pathname + window.location.search);
+                }
+                return;
+            }
+
+            const encoded = encodeWorkoutToURL();
+            if (encoded) {
+                history.replaceState(null, '', '#' + encoded);
+            }
+        }
+
+        // Debounced URL update - waits 500ms after last change
+        let urlUpdateTimeout = null;
+        function debouncedUpdateURL() {
+            if (urlUpdateTimeout) {
+                clearTimeout(urlUpdateTimeout);
+            }
+            urlUpdateTimeout = setTimeout(() => {
+                updateURL();
+            }, 500);
+        }
+
+        function loadWorkoutFromURL() {
+            const hash = window.location.hash.substring(1);
+            if (!hash) return false;
+
+            const workoutData = decodeWorkoutFromURL(hash);
+            if (!workoutData) return false;
+
+            try {
+                // Restore workout name
+                if (workoutData.name) {
+                    document.getElementById('workoutName').value = workoutData.name;
+                }
+
+                // Restore supersets
+                if (workoutData.supersets && Array.isArray(workoutData.supersets)) {
+                    workoutSupersets = workoutData.supersets;
+
+                    // Update counters to avoid ID conflicts
+                    supersetCounter = Math.max(...workoutSupersets.map(s => s.id), -1) + 1;
+
+                    const allExerciseIds = workoutSupersets.flatMap(s =>
+                        s.exercises.map(e => e.id)
+                    );
+                    exerciseCounter = allExerciseIds.length > 0 ? Math.max(...allExerciseIds) + 1 : 0;
+
+                    renderWorkout();
+                    return true;
+                }
+            } catch (e) {
+                console.error('Error loading workout from URL:', e);
+            }
+
+            return false;
         }
 
         // Button Handlers
@@ -1243,7 +1344,33 @@
             if (workoutSupersets.length === 0 || confirm('Clear all supersets from workout?')) {
                 workoutSupersets = [];
                 renderWorkout();
+                updateURL();
             }
+        });
+
+        document.getElementById('shareBtn').addEventListener('click', () => {
+            if (workoutSupersets.length === 0) {
+                alert('Add workout types and exercises before sharing');
+                return;
+            }
+
+            // Force immediate URL update
+            updateURL();
+
+            // Copy URL to clipboard
+            const url = window.location.href;
+            navigator.clipboard.writeText(url).then(() => {
+                const btn = document.getElementById('shareBtn');
+                const originalText = btn.textContent;
+                btn.textContent = 'Link Copied!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy URL:', err);
+                // Fallback: show URL in prompt
+                prompt('Copy this URL to share your workout:', url);
+            });
         });
 
         document.getElementById('exportBtn').addEventListener('click', () => {
@@ -1354,9 +1481,17 @@
             doc.save(`${workoutName.replace(/\s+/g, '-').toLowerCase()}.pdf`);
         });
 
+        // Workout name change listener
+        document.getElementById('workoutName').addEventListener('input', () => {
+            debouncedUpdateURL();
+        });
+
         // Initialize
         renderSupersetTypes();
         renderCatalog();
+
+        // Load workout from URL if present
+        loadWorkoutFromURL();
     </script>
 </body>
 </html>
