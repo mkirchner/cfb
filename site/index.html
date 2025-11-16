@@ -492,81 +492,107 @@
     </div>
 
     <script>
-        const exercises = {
-            "Cardio": {
-                icon: "directions_run",
-                exercises: [
-                    "Biking",
-                    "Burpees",
-                    "Double Unders",
-                    "Rope Jumps",
-                    "Rowing",
-                    "Running"
-                ]
-            },
-            "Weightlifting": {
-                icon: "fitness_center",
-                exercises: [
-                    "Back Squats",
-                    "Clean & Jerk",
-                    "Cleans",
-                    "Deadlifts",
-                    "Farmer's Walk",
-                    "Front Squats",
-                    "Goblet Squats",
-                    "Hang Power Cleans",
-                    "KB Cleans",
-                    "KB Deadlifts",
-                    "KB Halos",
-                    "KB one-hand OH Squats",
-                    "KB Presses",
-                    "KB Rows",
-                    "KB Snatches",
-                    "KB Swings",
-                    "Overhead Squats",
-                    "Power Cleans",
-                    "Push Presses",
-                    "Shoulder Presses",
-                    "Snatches",
-                    "Sumo Deadlift High Pulls",
-                    "Thrusters",
-                    "Wall Balls"
-                ]
-            },
-            "Gymnastics": {
-                icon: "sports_gymnastics",
-                exercises: [
-                    "Air Squats",
-                    "Back Extensions",
-                    "Back Lunges",
-                    "Box Jumps",
-                    "Bulgarian Lunges",
-                    "Crunches",
-                    "Dips",
-                    "Handstand Push-Ups",
-                    "High Knees",
-                    "Jumping Lunges",
-                    "Muscle Up",
-                    "Pistols",
-                    "Planks",
-                    "Pull-Ups",
-                    "Push-Ups",
-                    "Ring Dips",
-                    "Ring Rows",
-                    "Side Planks",
-                    "Sit-ups",
-                    "Toes to Bar",
-                    "Walking Lunges",
-                    "Wall Walks"
-                ]
-            },
-            "Other": {
-                icon: "sports",
-                exercises: [
-                    "Rest"
-                ]
-            }
+        // Flat exercise catalog - append-only repository
+        // Each exercise has: id (unique), name, class (category), visible (defaults to true)
+        const exerciseCatalog = [
+            // Cardio
+            { id: 1, name: "Biking", class: "Cardio", visible: true },
+            { id: 2, name: "Burpees", class: "Cardio", visible: true },
+            { id: 3, name: "Double Unders", class: "Cardio", visible: true },
+            { id: 4, name: "Rope Jumps", class: "Cardio", visible: true },
+            { id: 5, name: "Rowing", class: "Cardio", visible: true },
+            { id: 6, name: "Running", class: "Cardio", visible: true },
+            // Weightlifting
+            { id: 7, name: "Back Squats", class: "Weightlifting", visible: true },
+            { id: 8, name: "Clean & Jerk", class: "Weightlifting", visible: true },
+            { id: 9, name: "Cleans", class: "Weightlifting", visible: true },
+            { id: 10, name: "Deadlifts", class: "Weightlifting", visible: true },
+            { id: 11, name: "Farmer's Walk", class: "Weightlifting", visible: true },
+            { id: 12, name: "Front Squats", class: "Weightlifting", visible: true },
+            { id: 13, name: "Goblet Squats", class: "Weightlifting", visible: true },
+            { id: 14, name: "Hang Power Cleans", class: "Weightlifting", visible: true },
+            { id: 15, name: "KB Cleans", class: "Weightlifting", visible: true },
+            { id: 16, name: "KB Deadlifts", class: "Weightlifting", visible: true },
+            { id: 17, name: "KB Halos", class: "Weightlifting", visible: true },
+            { id: 18, name: "KB one-hand OH Squats", class: "Weightlifting", visible: true },
+            { id: 19, name: "KB Presses", class: "Weightlifting", visible: true },
+            { id: 20, name: "KB Rows", class: "Weightlifting", visible: true },
+            { id: 21, name: "KB Snatches", class: "Weightlifting", visible: true },
+            { id: 22, name: "KB Swings", class: "Weightlifting", visible: true },
+            { id: 23, name: "Overhead Squats", class: "Weightlifting", visible: true },
+            { id: 24, name: "Power Cleans", class: "Weightlifting", visible: true },
+            { id: 25, name: "Push Presses", class: "Weightlifting", visible: true },
+            { id: 26, name: "Shoulder Presses", class: "Weightlifting", visible: true },
+            { id: 27, name: "Snatches", class: "Weightlifting", visible: true },
+            { id: 28, name: "Sumo Deadlift High Pulls", class: "Weightlifting", visible: true },
+            { id: 29, name: "Thrusters", class: "Weightlifting", visible: true },
+            { id: 30, name: "Wall Balls", class: "Weightlifting", visible: true },
+            // Gymnastics
+            { id: 31, name: "Air Squats", class: "Gymnastics", visible: true },
+            { id: 32, name: "Back Extensions", class: "Gymnastics", visible: true },
+            { id: 33, name: "Back Lunges", class: "Gymnastics", visible: true },
+            { id: 34, name: "Box Jumps", class: "Gymnastics", visible: true },
+            { id: 35, name: "Bulgarian Lunges", class: "Gymnastics", visible: true },
+            { id: 36, name: "Crunches", class: "Gymnastics", visible: true },
+            { id: 37, name: "Dips", class: "Gymnastics", visible: true },
+            { id: 38, name: "Handstand Push-Ups", class: "Gymnastics", visible: true },
+            { id: 39, name: "High Knees", class: "Gymnastics", visible: true },
+            { id: 40, name: "Jumping Lunges", class: "Gymnastics", visible: true },
+            { id: 41, name: "Muscle Up", class: "Gymnastics", visible: true },
+            { id: 42, name: "Pistols", class: "Gymnastics", visible: true },
+            { id: 43, name: "Planks", class: "Gymnastics", visible: true },
+            { id: 44, name: "Pull-Ups", class: "Gymnastics", visible: true },
+            { id: 45, name: "Push-Ups", class: "Gymnastics", visible: true },
+            { id: 46, name: "Ring Dips", class: "Gymnastics", visible: true },
+            { id: 47, name: "Ring Rows", class: "Gymnastics", visible: true },
+            { id: 48, name: "Side Planks", class: "Gymnastics", visible: true },
+            { id: 49, name: "Sit-ups", class: "Gymnastics", visible: true },
+            { id: 50, name: "Toes to Bar", class: "Gymnastics", visible: true },
+            { id: 51, name: "Walking Lunges", class: "Gymnastics", visible: true },
+            { id: 52, name: "Wall Walks", class: "Gymnastics", visible: true },
+            // Other
+            { id: 53, name: "Rest", class: "Other", visible: true }
+        ];
+
+        // Category icons mapping
+        const categoryIcons = {
+            "Cardio": "directions_run",
+            "Weightlifting": "fitness_center",
+            "Gymnastics": "sports_gymnastics",
+            "Other": "sports"
         };
+
+        // Build categorized exercise structure from flat catalog at runtime
+        function buildExercisesByCategory() {
+            const result = {};
+
+            // Initialize categories with their icons
+            for (const [category, icon] of Object.entries(categoryIcons)) {
+                result[category] = {
+                    icon: icon,
+                    exercises: []
+                };
+            }
+
+            // Populate with visible exercises from catalog
+            for (const exercise of exerciseCatalog) {
+                if (exercise.visible && result[exercise.class]) {
+                    result[exercise.class].exercises.push(exercise.name);
+                }
+            }
+
+            // Remove empty categories
+            for (const category of Object.keys(result)) {
+                if (result[category].exercises.length === 0) {
+                    delete result[category];
+                }
+            }
+
+            return result;
+        }
+
+        // Runtime categorized structure
+        const exercises = buildExercisesByCategory();
 
         const supersetTypes = [
             {
