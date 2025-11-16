@@ -563,6 +563,11 @@
         };
 
         // Build categorized exercise structure from flat catalog at runtime
+        // Helper function to find exercise in catalog by ID
+        function getExerciseByCatalogId(catalogId) {
+            return exerciseCatalog.find(ex => ex.id === catalogId);
+        }
+
         function buildExercisesByCategory() {
             const result = {};
 
@@ -577,7 +582,11 @@
             // Populate with visible exercises from catalog
             for (const exercise of exerciseCatalog) {
                 if (exercise.visible && result[exercise.class]) {
-                    result[exercise.class].exercises.push(exercise.name);
+                    result[exercise.class].exercises.push({
+                        id: exercise.id,
+                        name: exercise.name,
+                        icon: categoryIcons[exercise.class]
+                    });
                 }
             }
 
@@ -677,18 +686,23 @@
                 const pillsContainer = document.createElement('div');
                 pillsContainer.className = 'exercise-pills';
 
-                data.exercises.forEach(exerciseName => {
+                data.exercises.forEach(exercise => {
                     const pill = document.createElement('div');
                     pill.className = 'exercise-pill';
                     if (!hasSupersetsInBuilder) {
                         pill.classList.add('disabled');
                     } else {
                         pill.draggable = true;
-                        pill.dataset.exercise = JSON.stringify({ name: exerciseName, category: category, icon: data.icon });
+                        pill.dataset.exercise = JSON.stringify({
+                            catalogId: exercise.id,
+                            name: exercise.name,
+                            category: category,
+                            icon: exercise.icon
+                        });
                         pill.addEventListener('dragstart', handleCatalogDragStart);
                         pill.addEventListener('dragend', handleCatalogDragEnd);
                     }
-                    pill.textContent = exerciseName;
+                    pill.textContent = exercise.name;
 
                     pillsContainer.appendChild(pill);
                 });
@@ -1286,7 +1300,7 @@
         // Convert to compact format for smaller URLs
         function toCompactFormat(workoutData) {
             return {
-                v: 2, // version 2 (compressed)
+                v: 3, // version 3 (uses catalog IDs for exercises)
                 n: workoutData.name || '',
                 s: workoutData.supersets.map(ss => {
                     const compact = {
@@ -1305,17 +1319,23 @@
                         }
                     }
 
-                    // Compact exercises
+                    // Compact exercises using catalog IDs
                     compact.e = ss.exercises.map(ex => {
                         const compactEx = {
-                            i: ex.id,
-                            n: ex.name,
-                            ic: ex.icon
+                            i: ex.id
                         };
+                        // Use catalog ID if available (much more compact)
+                        if (ex.catalogId) {
+                            compactEx.ci = ex.catalogId;
+                        } else {
+                            // Fallback for exercises without catalog ID (legacy)
+                            compactEx.n = ex.name;
+                            compactEx.ic = ex.icon;
+                            if (ex.category) compactEx.c = ex.category;
+                        }
                         // Only include non-empty values
                         if (ex.reps) compactEx.r = ex.reps;
                         if (ex.weight) compactEx.w = ex.weight;
-                        if (ex.category) compactEx.c = ex.category;
                         return compactEx;
                     });
 
@@ -1340,14 +1360,32 @@
                         type: type,
                         title: ss.ti || '',
                         config: { ...type.defaults, ...ss.c },
-                        exercises: ss.e.map(ex => ({
-                            id: ex.i,
-                            name: ex.n,
-                            icon: ex.ic,
-                            reps: ex.r || '',
-                            weight: ex.w || '',
-                            category: ex.c
-                        }))
+                        exercises: ss.e.map(ex => {
+                            // v3 format: use catalog ID to look up exercise data
+                            if (ex.ci) {
+                                const catalogExercise = getExerciseByCatalogId(ex.ci);
+                                if (catalogExercise) {
+                                    return {
+                                        id: ex.i,
+                                        catalogId: ex.ci,
+                                        name: catalogExercise.name,
+                                        icon: categoryIcons[catalogExercise.class],
+                                        category: catalogExercise.class,
+                                        reps: ex.r || '',
+                                        weight: ex.w || ''
+                                    };
+                                }
+                            }
+                            // v2 format fallback or unknown catalog ID
+                            return {
+                                id: ex.i,
+                                name: ex.n,
+                                icon: ex.ic,
+                                reps: ex.r || '',
+                                weight: ex.w || '',
+                                category: ex.c
+                            };
+                        })
                     };
                 })
             };
