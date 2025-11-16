@@ -1322,18 +1322,9 @@
                     // Compact exercises using catalog IDs
                     compact.e = ss.exercises.map(ex => {
                         const compactEx = {
-                            i: ex.id
+                            i: ex.id,
+                            ci: ex.catalogId
                         };
-                        // Use catalog ID if available (much more compact)
-                        if (ex.catalogId) {
-                            compactEx.ci = ex.catalogId;
-                        } else {
-                            // Fallback for exercises without catalog ID (legacy)
-                            compactEx.n = ex.name;
-                            compactEx.ic = ex.icon;
-                            if (ex.category) compactEx.c = ex.category;
-                        }
-                        // Only include non-empty values
                         if (ex.reps) compactEx.r = ex.reps;
                         if (ex.weight) compactEx.w = ex.weight;
                         return compactEx;
@@ -1346,11 +1337,6 @@
 
         // Convert from compact format back to full format
         function fromCompactFormat(compact) {
-            // Handle old uncompressed format (no version field)
-            if (!compact.v) {
-                return compact;
-            }
-
             return {
                 name: compact.n || '',
                 supersets: compact.s.map(ss => {
@@ -1361,29 +1347,15 @@
                         title: ss.ti || '',
                         config: { ...type.defaults, ...ss.c },
                         exercises: ss.e.map(ex => {
-                            // v3 format: use catalog ID to look up exercise data
-                            if (ex.ci) {
-                                const catalogExercise = getExerciseByCatalogId(ex.ci);
-                                if (catalogExercise) {
-                                    return {
-                                        id: ex.i,
-                                        catalogId: ex.ci,
-                                        name: catalogExercise.name,
-                                        icon: categoryIcons[catalogExercise.class],
-                                        category: catalogExercise.class,
-                                        reps: ex.r || '',
-                                        weight: ex.w || ''
-                                    };
-                                }
-                            }
-                            // v2 format fallback or unknown catalog ID
+                            const catalogExercise = getExerciseByCatalogId(ex.ci);
                             return {
                                 id: ex.i,
-                                name: ex.n,
-                                icon: ex.ic,
+                                catalogId: ex.ci,
+                                name: catalogExercise.name,
+                                icon: categoryIcons[catalogExercise.class],
+                                category: catalogExercise.class,
                                 reps: ex.r || '',
-                                weight: ex.w || '',
-                                category: ex.c
+                                weight: ex.w || ''
                             };
                         })
                     };
